@@ -72,3 +72,4 @@ complete, it must append an entry containing:
 2. Why it changed
 3. Files, commands, URLs, or commits that prove it
 4. Whether the result is complete, partial, failed, reverted, or blocked
+| T-023 | 2026-07-08 16:36 | Fable 5 | Created the fresh application repository at `cadre-ai-chatbot`, seeded it with the curated KB, scenario coverage, architecture docs, and timeline; accepted ADR-005 (real Supabase escalations, 30-day retention) and added ADR-006 (Upstash rate limiting) and ADR-007 (model-by-benchmark); wrote project-specific root `plan.md` and `CLAUDE.md`; added `.gitignore` and names-only `.env.example`. This repository's copy of the timeline is now canonical. | Executes Phase 0 of plan.md with the user's resolved P0 decisions before any application code. | Root commit `e1d642a` (21 files); no secret values present. Complete. |
