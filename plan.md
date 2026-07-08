@@ -55,20 +55,20 @@ This file is updated when reality diverges; the append-only history lives in
 
 - [x] Fresh repository with curated knowledge + docs from planning package
 - [x] ADR-005 accepted; ADR-006 and ADR-007 recorded
-- [~] Root `plan.md` and `CLAUDE.md` adapted to the real project
-- [ ] `.env.example` with names only; `.gitignore` verified before any key exists locally
-- [ ] Initial docs commit
+- [x] Root `plan.md` and `CLAUDE.md` adapted to the real project
+- [x] `.env.example` with names only; `.gitignore` verified before any key exists locally
+- [x] Initial docs commit (`e1d642a`)
 
 Exit: decisions documented; zero secrets in the repository.
 
 ## Phase 1: Shell and early deployment
 
-- [ ] Scaffold Next.js (App Router, TypeScript, Tailwind, ESLint) + test runner
-- [ ] Minimal accessible chat layout: transcript live region, composer,
-      suggested prompts from scenario coverage
-- [ ] Mock streaming endpoint (no provider call)
-- [ ] Deploy to Vercel; smoke-test the public URL in a clean browser
-- [ ] Commit(s): scaffold, chat shell, deploy config
+- [x] Scaffold Next.js (App Router, TypeScript, Tailwind, ESLint) + test runner (`a4a0115`)
+- [x] Minimal accessible chat layout: transcript live region, composer,
+      suggested prompts from scenario coverage (`779ca5a`)
+- [x] Mock streaming endpoint (no provider call) (`779ca5a`)
+- [x] Deploy to Vercel; smoke-test the public URL — https://cadre-ai-chatbot.vercel.app (T-025)
+- [x] Commit(s): scaffold, chat shell, deploy config
 
 Exit: a working mock chat is live on the public URL — day 1.
 
