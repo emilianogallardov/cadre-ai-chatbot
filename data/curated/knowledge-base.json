@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0",
+  "reviewed_at": "2026-07-08",
+  "policy": {
+    "answer_only_from_entries": true,
+    "pricing": "Do not invent prices or ranges. Offer a strategist conversation.",
+    "portal": "Explain the public description only. Do not invent a portal URL or account instructions.",
+    "security": "Describe Cadre's published approach without promising client-specific controls, certifications, or contractual terms.",
+    "unknown": "State the limitation briefly and offer the verified contact route."
+  },
+  "verified_contacts": {
+    "contact_url": "https://www.cadreai.com/contact",
+    "email": "hello@gocadre.ai",
+    "phone": "(619) 324-3223"
+  },
+  "entries": [
+    {
+      "id": "company-overview",
+      "topic": "What Cadre AI does",
+      "approved_answer": "Cadre AI is an AI strategy and implementation consultancy. It helps organizations identify high-ROI opportunities, prepare teams for adoption, and implement workflows, automations, and AI agents intended to improve revenue, profitability, and employee impact.",
+      "keywords": ["what does cadre do", "company", "consultancy", "get started"],
+      "sources": [
+        "https://www.cadreai.com",
+        "https://www.cadreai.com/about"
+      ]
+    },
+    {
+      "id": "services",
+      "topic": "Core services",
+      "approved_answer": "Cadre groups its services into AI Strategy, AI Leadership and Facilitation, AI Engineering, and AI Agents. Its stated approach combines business prioritization, technical implementation, and organizational adoption.",
+      "keywords": ["services", "strategy", "facilitation", "engineering", "agents"],
+      "sources": [
+        "https://www.cadreai.com",
+        "https://www.cadreai.com/strategy",
+        "https://www.cadreai.com/leadership-facilitation",
+        "https://www.cadreai.com/ai-engineering",
+        "https://www.cadreai.com/agents"
+      ]
+    },
+    {
+      "id": "delivery-approach",
+      "topic": "How Cadre approaches AI transformation",
+      "approved_answer": "Cadre describes a four-part strategy process: discover use cases, survey available tools, implement selected solutions, and scale successful work. It emphasizes buying or activating existing capabilities when they fit, automating across current systems when appropriate, and building custom agents when simpler options are insufficient.",
+      "keywords": ["approach", "method", "buy vs build", "implementation"],
+      "sources": [
+        "https://www.cadreai.com/strategy",
+        "https://www.cadreai.com/ai-engineering"
+      ]
+    },
+    {
+      "id": "industries",
+      "topic": "Industries Cadre serves",
+      "approved_answer": "Cadre publishes dedicated experience for professional services, private equity, real estate, financial services, mortgage and lending, construction, retail and e-commerce, manufacturing and logistics, and hospitality. For an unlisted industry, the safe next step is to discuss the company's workflows with a strategist rather than assume fit.",
+      "keywords": ["industry", "sector", "do you work with", "vertical"],
+      "sources": [
+        "https://www.cadreai.com/industries"
+      ]
+    },
+    {
+      "id": "departments",
+      "topic": "Departments Cadre supports",
+      "approved_answer": "Cadre publishes examples for legal, technology, marketing, customer success, finance, operations, executive leadership, and sales. Its strategy process also includes department-level discovery to identify valuable and feasible use cases.",
+      "keywords": ["department", "team", "function", "sales", "operations", "finance"],
+      "sources": [
+        "https://www.cadreai.com/departments",
+        "https://www.cadreai.com/strategy"
+      ]
+    },
+    {
+      "id": "maturity-index",
+      "topic": "AI Maturity Index",
+      "approved_answer": "Cadre's AI Maturity Index assesses an organization across its eight-pillar AI transformation framework. Cadre says participants receive a grade in each area, explanations, and actionable improvement guidance. In the AI Transformation Intensive, the index helps establish the organization's current state and informs workshops, use cases, vision, and roadmap.",
+      "keywords": ["maturity index", "score", "assessment", "eight pillars"],
+      "sources": [
+        "https://www.cadreai.com",
+        "https://www.cadreai.com/strategy",
+        "https://www.cadreai.com/ai-transformation-intensive"
+      ]
+    },
+    {
+      "id": "eight-pillars",
+      "topic": "Eight pillars of AI transformation",
+      "approved_answer": "Cadre's published eight pillars are: a dedicated AI team; an AI command center; an AI-first culture shift; an AI-enabled technology stack; AI-healthy data; AI agent readiness; departmental AI deep dives; and a long-term AI vision.",
+      "keywords": ["eight pillars", "framework", "transformation pillars"],
+      "sources": [
+        "https://www.cadreai.com/strategy"
+      ]
+    },
+    {
+      "id": "llm-selection",
+      "topic": "LLM and tool selection",
+      "approved_answer": "Cadre says model and tool selection should be based on the use case, required quality, speed, cost, current technology stack, and business goals. Its published guidance favors lower-cost models for high-volume straightforward work, balanced models for most knowledge work, and highest-capability models for complex or high-consequence reasoning. The exact recommendation requires discovery of the client's workflow and risk profile.",
+      "keywords": ["llm selection", "model", "Claude", "OpenAI", "Copilot", "cost"],
+      "sources": [
+        "https://www.cadreai.com/strategy",
+        "https://www.cadreai.com/articles/ai-model-selection"
+      ]
+    },
+    {
+      "id": "data-security",
+      "topic": "Data security approach",
+      "approved_answer": "Cadre's public guidance emphasizes selecting secure company-wide AI tools, reducing the use of personal AI accounts for company information, establishing policies and ownership, and configuring solutions so business data is not used to train public models. Specific controls, compliance requirements, and architecture should be confirmed for the client's environment with a strategist.",
+      "keywords": ["security", "privacy", "data", "training", "compliance"],
+      "sources": [
+        "https://www.cadreai.com/strategy",
+        "https://www.cadreai.com/ai-engineering"
+      ]
+    },
+    {
+      "id": "portal",
+      "topic": "Cadre client portal",
+      "approved_answer": "Cadre publicly describes a centralized portal for tracking AI tools, agents, training, and results. The public site does not provide verified login or account-recovery instructions, so access questions should be directed to Cadre support.",
+      "keywords": ["portal", "login", "account", "track results", "access"],
+      "sources": [
+        "https://www.cadreai.com",
+        "https://www.cadreai.com/contact"
+      ]
+    },
+    {
+      "id": "case-studies",
+      "topic": "Published outcomes and examples",
+      "approved_answer": "Cadre publishes examples involving lead-processing agents, supplier-confirmation automation, proposal automation, housing visibility, field scheduling, email agents, loan intelligence, and voice/chat booking agents. Use the case-studies page for exact metrics and context; do not generalize a published result into a guarantee.",
+      "keywords": ["case study", "results", "examples", "roi", "outcomes"],
+      "sources": [
+        "https://www.cadreai.com/case-studies"
+      ]
+    },
+    {
+      "id": "pricing",
+      "topic": "Service pricing",
+      "approved_answer": "Cadre does not publish general service pricing in the reviewed public pages. Pricing depends on the engagement and should be discussed with an AI strategist.",
+      "keywords": ["price", "pricing", "cost", "how much", "rate"],
+      "sources": [
+        "https://www.cadreai.com/contact"
+      ]
+    },
+    {
+      "id": "contact",
+      "topic": "Talk to Cadre or escalate",
+      "approved_answer": "Use Cadre's contact page to talk with an AI strategist or request help. The reviewed public contact details are hello@gocadre.ai and (619) 324-3223.",
+      "keywords": ["contact", "book", "call", "strategist", "human", "escalate"],
+      "sources": [
+        "https://www.cadreai.com/contact"
+      ]
+    }
+  ]
+}
