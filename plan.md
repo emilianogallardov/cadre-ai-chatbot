@@ -109,10 +109,15 @@ Exit: pricing, booking, portal, and unknown questions all behave safely.
 
 ## Phase 4: Voice and polish
 
-- [ ] Feature-detected speech input (Web Speech API); hidden when unsupported
-- [ ] Opt-in speech output; never autoplay
-- [ ] Full text fallback verified with voice unavailable
+- [x] Feature-detected speech input (Web Speech API); hidden when unsupported
+      (`680f7ad`; interim preview, never auto-sends)
+- [x] Opt-in speech output; never autoplay (`680f7ad`; off by default, speaks
+      once on stream completion, cancelled by new input/Stop)
+- [x] Full text fallback verified with voice unavailable (`680f7ad`; SSR HTML
+      carries no voice controls; unsupported browsers render the identical
+      text experience. Real-mic Chrome smoke remains a manual step)
 - [ ] Responsive, keyboard, loading, empty, and error states finished
+      (final polish pass pending in Phase 5 live smoke)
 
 Exit: voice adds value without becoming a dependency.
 
