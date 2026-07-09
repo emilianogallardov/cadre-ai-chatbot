@@ -59,8 +59,16 @@ export async function* streamChatCompletion(
   }
 
   const model = opts.model ?? process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL;
+  // OpenRouter-native fallback routing: when a fallback is configured, the
+  // provider retries the request against it if the primary errors. Policy:
+  // the fallback is the benchmark's runner-up (ADR-007), so an unbenchmarked
+  // model never answers. Explicit per-call overrides (the benchmark harness)
+  // never get a fallback — a benchmark must measure exactly one model.
+  const fallback = process.env.OPENROUTER_FALLBACK_MODEL;
+  const useFallback = !opts.model && !!fallback && fallback !== model;
   const body = JSON.stringify({
     model,
+    ...(useFallback ? { models: [model, fallback] } : {}),
     messages: [{ role: "system", content: opts.system }, ...opts.messages],
     stream: true,
     max_tokens: resolveMaxTokens(),

@@ -263,6 +263,43 @@ describe("streamChatCompletion", () => {
     ).toBe("anthropic/claude-sonnet-4.5");
   });
 
+  it("adds the models fallback array only when configured and not overridden", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(sseResponse(["data: [DONE]\n\n"]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const bodyOfCall = (n: number) =>
+      JSON.parse((fetchMock.mock.calls[n][1] as RequestInit).body as string);
+
+    // No fallback configured: no models array.
+    await collect(streamChatCompletion({ system: "s", messages: [] }));
+    expect(bodyOfCall(0).models).toBeUndefined();
+
+    // Fallback configured: primary + fallback, in order.
+    vi.stubEnv("OPENROUTER_FALLBACK_MODEL", "openai/gpt-5-mini");
+    await collect(streamChatCompletion({ system: "s", messages: [] }));
+    expect(bodyOfCall(1).models).toEqual([
+      "anthropic/claude-haiku-4.5",
+      "openai/gpt-5-mini",
+    ]);
+
+    // Explicit per-call model override (benchmark): never a fallback.
+    await collect(
+      streamChatCompletion({
+        system: "s",
+        messages: [],
+        model: "anthropic/claude-sonnet-4.5",
+      }),
+    );
+    expect(bodyOfCall(2).models).toBeUndefined();
+
+    // Fallback equal to the primary: dropped.
+    vi.stubEnv("OPENROUTER_FALLBACK_MODEL", "anthropic/claude-haiku-4.5");
+    await collect(streamChatCompletion({ system: "s", messages: [] }));
+    expect(bodyOfCall(3).models).toBeUndefined();
+  });
+
   it("clamps OPENROUTER_MAX_TOKENS and falls back on invalid values", async () => {
     const fetchMock = vi
       .fn()
