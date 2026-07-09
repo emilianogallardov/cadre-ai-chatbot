@@ -74,12 +74,17 @@ Exit: a working mock chat is live on the public URL — day 1.
 
 ## Phase 2: Grounded chat
 
-- [ ] Request schema validation (roles, count, length) before any provider call
-- [ ] OpenRouter model gateway (server-only; provider config isolated)
-- [ ] Prompt assembler: system policy + curated KB + bounded recent turns
-- [ ] Upstash rate limiter wired ahead of model spend (ADR-006)
-- [ ] Streaming with abort/retry; provider errors become typed, friendly states
+- [x] Request schema validation (roles, count, length) before any provider call
+      (`779ca5a` base + `ccd1fa5` hardening: strict user/assistant alternation, `maxTotalChars` cap)
+- [x] OpenRouter model gateway (server-only; provider config isolated) (`efa62b8`)
+- [x] Prompt assembler: system policy + curated KB + bounded recent turns (`d795c62`)
+- [x] Upstash rate limiter wired ahead of model spend (ADR-006) (`3fa7cdf` + `ccd1fa5`
+      fail-closed; wired in `3f29276`. Durable Redis still needs Vercel env vars —
+      permissive in-memory fallback is live in prod until they are provisioned)
+- [x] Streaming with abort/retry; provider errors become typed, friendly states
+      (`efa62b8` gateway + `3f29276` route; client stop/retry normalized in `ccd1fa5`)
 - [ ] Model benchmark across 3 candidates; record results in ADR-007; select model
+      (blocked on `OPENROUTER_API_KEY` in Vercel)
 
 Exit: factual scenarios pass against the live model within budget caps.
 
