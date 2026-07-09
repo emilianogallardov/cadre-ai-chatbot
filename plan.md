@@ -90,12 +90,20 @@ Exit: factual scenarios pass against the live model within budget caps.
 
 ## Phase 3: Actions and escalation
 
-- [ ] Typed informational actions: `show_strategy_contact`,
+- [x] Typed informational actions: `show_strategy_contact`,
       `show_maturity_index_path`, `show_portal_help` (deterministic cards)
-- [ ] Unknown-answer path: state the limitation, offer verified contact
-- [ ] `create_escalation`: consent + validation → Supabase insert (server-only)
-      → reference ID; direct-contact fallback on failure
-- [ ] Per-session escalation cap + limiter coverage for the mutating route
+      (`e09c3ce` selector; `24c00f0` route attaches cards after the stream)
+- [x] Unknown-answer path: state the limitation, offer verified contact
+      (`e09c3ce`: escalation card only when no action matched and the assistant
+      signalled it could not answer)
+- [x] `create_escalation`: consent + validation → Supabase insert (server-only)
+      → reference ID; direct-contact fallback on failure (`78c30aa` server write +
+      `31e4ab5` consent-form UI + `8121a6a` hardening. Persistence is code-complete
+      and deployed but runs on an in-memory `MemoryStore` in prod until Supabase
+      env vars are provisioned)
+- [x] Per-session escalation cap + limiter coverage for the mutating route
+      (`31e4ab5`/`8121a6a` sessionStorage cap + `78c30aa`/`8121a6a`
+      `checkEscalationLimit` 3/IP/day, fail-closed, checked after validation)
 
 Exit: pricing, booking, portal, and unknown questions all behave safely.
 
