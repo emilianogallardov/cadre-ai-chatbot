@@ -1,6 +1,11 @@
 import type { ActionCard } from "@/lib/chat/types";
+import { EscalationCard } from "./EscalationCard";
 
 export function ActionCardView({ card }: { card: ActionCard }) {
+  if (card.kind === "escalation") {
+    return <EscalationCard card={card} />;
+  }
+
   return (
     <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <p className="text-sm font-medium">{card.title}</p>
