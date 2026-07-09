@@ -40,8 +40,14 @@ export interface ChatRequest {
   messages: ChatMessage[];
 }
 
-/** Bounds enforced before any model spend (see ADR-006). */
+/**
+ * Bounds enforced before any model spend (see ADR-006). maxTotalChars caps the
+ * whole conversation payload so every allowed request has a known worst-case
+ * token cost — per-message caps alone let 30 x 2000 chars (~15k tokens) through,
+ * which at 400 requests/day could exceed the metered budget.
+ */
 export const LIMITS = {
   maxMessages: 30,
   maxMessageChars: 2000,
+  maxTotalChars: 8000,
 } as const;

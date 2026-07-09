@@ -6,6 +6,7 @@ import type {
   ChatMessage,
   StreamEvent,
 } from "@/lib/chat/types";
+import { toPayloadMessages } from "@/lib/chat/payload";
 import { Composer } from "./Composer";
 import { SuggestedPrompts } from "./SuggestedPrompts";
 import { Transcript } from "./Transcript";
@@ -44,7 +45,7 @@ export function Chat() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            messages: history.map((i) => i.message),
+            messages: toPayloadMessages(history.map((i) => i.message)),
           }),
           signal: controller.signal,
         });

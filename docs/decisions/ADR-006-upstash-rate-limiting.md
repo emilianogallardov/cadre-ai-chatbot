@@ -43,6 +43,26 @@ real limiter.
   blocked during normal use.
 - Rate-limit responses are a designed UI state, not an error dump.
 
+## Amendments (2026-07-09, after adversarial review)
+
+An external adversarial review (Codex GPT-5.5) of the Phase 2 implementation
+changed two details of this decision:
+
+1. **Fail closed, not open.** The original implementation failed open on a
+   Redis outage (availability over strictness). Review showed this suspends the
+   budget guarantee exactly when it matters; since the limiter fronts a metered
+   $5 key and the rate-limit response already includes verified contact
+   details, an outage now denies with the same friendly 429 instead of
+   spending unmetered.
+2. **Whole-conversation character cap.** Per-message caps alone allowed a
+   worst case of ~15k input tokens per request — at 400 requests/day that
+   could exceed the budget. `LIMITS.maxTotalChars` (8000) now bounds the whole
+   payload, making the worst-case day roughly $2 at Haiku-class pricing.
+
+The same review round added structural transcript validation (strict
+user/assistant alternation ending in a user turn), closing the forged
+assistant-history injection channel at the shape level.
+
 ## Revisit when
 
 The bot gets real production traffic (move limits behind auth/tenancy), or the

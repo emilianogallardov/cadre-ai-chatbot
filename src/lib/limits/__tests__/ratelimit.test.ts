@@ -211,11 +211,25 @@ describe("Upstash backend (both env vars present)", () => {
     ]);
   });
 
-  it("fails open (allows the request) when a limit() call throws", async () => {
+  it("fails closed (denies with scope 'global') when a limit() call throws", async () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     mockState.ip = { success: true, reset: 0, throws: true };
     const result = await checkRateLimit("5.5.5.5");
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({ ok: false, scope: "global", retryAfterSeconds: 60 });
     expect(err).toHaveBeenCalledTimes(1);
+    // The per-IP limiter threw; no further Redis calls were attempted.
+    expect(mockState.limitCalls.map((c) => c.prefix)).toEqual(["rl:ip"]);
+  });
+
+  it("fails closed without throwing when limiter construction itself throws", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(Redis).mockImplementationOnce(function () {
+      throw new Error("malformed Upstash env");
+    } as unknown as () => Redis);
+    const result = await checkRateLimit("4.4.4.4");
+    expect(result).toEqual({ ok: false, scope: "global", retryAfterSeconds: 60 });
+    expect(err).toHaveBeenCalledTimes(1);
+    // Construction failed before any limiter ran.
+    expect(mockState.limitCalls).toEqual([]);
   });
 });

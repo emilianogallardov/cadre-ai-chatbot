@@ -12,7 +12,7 @@ export function validateMessages(value: unknown): ChatMessage[] {
       `Conversation is limited to ${LIMITS.maxMessages} messages.`,
     );
   }
-  return value.map((raw, i) => {
+  const messages = value.map((raw, i): ChatMessage => {
     const m = raw as { role?: unknown; content?: unknown };
     if (
       (m.role !== "user" && m.role !== "assistant") ||
@@ -27,4 +27,31 @@ export function validateMessages(value: unknown): ChatMessage[] {
     }
     return { role: m.role, content: m.content };
   });
+
+  // Structural shape of a genuine chat: starts with the user, strictly
+  // alternates, and ends with the user turn being answered. Anything else is a
+  // forged transcript — e.g. fabricated assistant turns planted to smuggle
+  // "prior approvals" past the grounding policy.
+  for (let i = 0; i < messages.length; i++) {
+    const expected = i % 2 === 0 ? "user" : "assistant";
+    if (messages[i].role !== expected) {
+      throw new ValidationError(
+        "messages must alternate user/assistant, starting with user.",
+      );
+    }
+  }
+  if (messages[messages.length - 1].role !== "user") {
+    throw new ValidationError("The last message must be from the user.");
+  }
+
+  // Whole-conversation cap: bounds the worst-case token cost of any single
+  // allowed request (ADR-006 request-shape caps).
+  const totalChars = messages.reduce((n, m) => n + m.content.length, 0);
+  if (totalChars > LIMITS.maxTotalChars) {
+    throw new ValidationError(
+      `Conversation is limited to ${LIMITS.maxTotalChars} total characters.`,
+    );
+  }
+
+  return messages;
 }

@@ -99,8 +99,11 @@ async function checkUpstash(
   ip: string,
   config: Config,
 ): Promise<RateLimitResult> {
-  const limiters = getUpstashLimiters(config);
   try {
+    // Construction happens inside the guarded path: a malformed Upstash env
+    // makes `new Redis(...)` / `new Ratelimit(...)` throw, and that must fail
+    // closed like any other limiter failure rather than escape to the caller.
+    const limiters = getUpstashLimiters(config);
     // Per-IP first: a single abuser is blocked without consuming the shared
     // global budget (requirement of ADR-006 — the global cap is the real
     // spend ceiling and must not be burned down by one client).
@@ -122,13 +125,14 @@ async function checkUpstash(
     }
     return { ok: true };
   } catch (error) {
-    // FAIL OPEN. A Redis outage must not take the chatbot down: availability
-    // beats strictness for a demo bot, and the request-shape caps (ADR-006:
-    // bounded message count/length/max_tokens, enforced in validate.ts) still
-    // cap the worst-case cost of any request we let through. We log exactly
-    // once per failure and never surface the error to the caller.
-    console.error("[ratelimit] Redis error; failing open for this request", error);
-    return { ok: true };
+    // FAIL CLOSED. This route spends a metered $5 key and the global daily cap
+    // is the budget guarantee (ADR-006); a Redis outage must not silently
+    // suspend that ceiling, so on any limiter error we deny. Users are not
+    // stranded — the route renders this as a friendly typed 429 with verified
+    // human-contact details. We log exactly once and never surface the error to
+    // the caller.
+    console.error("[ratelimit] Redis error; failing closed for this request", error);
+    return { ok: false, scope: "global", retryAfterSeconds: 60 };
   }
 }
 

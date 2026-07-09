@@ -130,8 +130,15 @@ function streamMockResponse(messages: ChatMessage[]) {
   return ndjsonResponse(stream);
 }
 
-/** First hop of x-forwarded-for; Vercel sets it for every request. */
+/**
+ * Client IP for the limiter key. Trust model: on Vercel these headers are set
+ * by the platform's proxy, which strips/overwrites incoming values, so a
+ * client cannot spoof them to rotate limiter buckets. Anything unidentifiable
+ * shares one "unknown" bucket rather than escaping the limiter.
+ */
 function clientIp(req: NextRequest): string {
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
   const forwarded = req.headers.get("x-forwarded-for");
   return forwarded?.split(",")[0]?.trim() || "unknown";
 }
