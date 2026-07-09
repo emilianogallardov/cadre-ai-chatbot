@@ -40,9 +40,16 @@ class SupabaseRestStore implements EscalationStore {
   ) {}
 
   async insert(record: EscalationRecord): Promise<{ referenceId: string }> {
-    const endpoint = `${this.url}/rest/v1/escalations`;
+    // The service key rides in these headers, so the destination is held to
+    // https and redirects are refused — a mis-set SUPABASE_URL must fail
+    // instead of forwarding credentials somewhere unexpected.
+    if (!this.url.startsWith("https://")) {
+      throw new StoreError(0, "Escalation store URL must be https.");
+    }
+    const endpoint = `${this.url.replace(/\/$/, "")}/rest/v1/escalations`;
     const response = await fetch(endpoint, {
       method: "POST",
+      redirect: "error",
       headers: {
         apikey: this.key,
         Authorization: `Bearer ${this.key}`,

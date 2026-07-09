@@ -11,14 +11,17 @@
 -- timestamp, status, and a generated reference id are stored. The surrounding
 -- transcript is never persisted.
 
+-- CHECK constraints mirror the route's validation limits as defense in depth:
+-- a future server path or validation regression cannot insert oversized or
+-- malformed rows.
 create table if not exists escalations (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
-  name text not null,
-  email text not null,
-  question text not null,
+  name text not null check (char_length(name) between 1 and 100),
+  email text not null check (char_length(email) <= 254 and position('@' in email) > 1),
+  question text not null check (char_length(question) between 1 and 2000),
   consented_at timestamptz not null,
-  status text not null default 'new'
+  status text not null default 'new' check (status in ('new', 'contacted', 'closed'))
 );
 
 -- No public access path: RLS on, and deliberately no policies. The service key

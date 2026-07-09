@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { ActionCard } from "@/lib/chat/types";
 
 export const CONTACT_EMAIL = "hello@gocadre.ai";
@@ -9,12 +9,30 @@ export const CONTACT_EMAIL = "hello@gocadre.ai";
 export const GENERIC_FAILURE = `Something went wrong sending your request. Please email ${CONTACT_EMAIL} directly.`;
 
 /**
- * Per-browser-session cap on successful escalations. Enforced with a
- * module-level counter (survives card remounts within the session) so a single
- * visitor cannot fan out unbounded human-contact requests from the transcript.
+ * Per-browser-session cap on successful escalations, persisted in
+ * sessionStorage so a reload does not reset it (the server's per-IP daily cap
+ * is the real guard; this only keeps the UI honest). Falls back to a
+ * module-level counter when storage is unavailable.
  */
 const MAX_SESSION_SUBMISSIONS = 2;
-let sessionSubmissionCount = 0;
+const SESSION_KEY = "cadre-escalations-submitted";
+let fallbackCount = 0;
+
+function submissionCount(): number {
+  try {
+    return Number(sessionStorage.getItem(SESSION_KEY) ?? "0") || 0;
+  } catch {
+    return fallbackCount;
+  }
+}
+
+function recordSubmission(): void {
+  try {
+    sessionStorage.setItem(SESSION_KEY, String(submissionCount() + 1));
+  } catch {
+    fallbackCount += 1;
+  }
+}
 
 const MAX = { name: 100, email: 254, question: 2000 } as const;
 
@@ -87,17 +105,26 @@ export function EscalationCard({ card }: { card: ActionCard }) {
   const [question, setQuestion] = useState("");
   const [consent, setConsent] = useState(false);
   const [phase, setPhase] = useState<Phase>(() =>
-    sessionSubmissionCount >= MAX_SESSION_SUBMISSIONS
+    submissionCount() >= MAX_SESSION_SUBMISSIONS
       ? { name: "confirmed", referenceId: null }
       : { name: "form", error: null },
   );
+  // Synchronous double-submit guard: state updates flush asynchronously, so a
+  // rapid second click could pass the `sending` check before React re-renders.
+  const inFlight = useRef(false);
 
   const sending = phase.name === "sending";
   const ready = canSubmit({ name, email, question, consent });
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (inFlight.current) return;
     if (!canSubmit({ name, email, question, consent })) return;
+    if (submissionCount() >= MAX_SESSION_SUBMISSIONS) {
+      setPhase({ name: "confirmed", referenceId: null });
+      return;
+    }
+    inFlight.current = true;
     setPhase({ name: "sending" });
     try {
       const res = await fetch("/api/escalations", {
@@ -112,13 +139,15 @@ export function EscalationCard({ card }: { card: ActionCard }) {
       });
       const outcome = outcomeFromResponse(await res.json());
       if (outcome.status === "confirmed") {
-        sessionSubmissionCount += 1;
+        recordSubmission();
         setPhase({ name: "confirmed", referenceId: outcome.referenceId });
       } else {
         setPhase({ name: "form", error: outcome.message });
       }
     } catch {
       setPhase({ name: "form", error: GENERIC_FAILURE });
+    } finally {
+      inFlight.current = false;
     }
   }
 

@@ -2,23 +2,45 @@ import { NextRequest } from "next/server";
 import { EscalationResult } from "@/lib/escalations/types";
 import { validateEscalation, ValidationError } from "@/lib/escalations/validate";
 import { getEscalationStore, StoreError } from "@/lib/escalations/store";
-import { checkEscalationLimit, checkRateLimit } from "@/lib/limits/ratelimit";
+import { checkEscalationLimit } from "@/lib/limits/ratelimit";
 import { knowledgeBase } from "@/lib/prompt/knowledge";
 
 export const runtime = "nodejs";
 
 /**
+ * Generous ceiling over the largest valid payload (100 + 254 + 2000 chars of
+ * fields plus JSON overhead); anything bigger is rejected before parsing.
+ */
+const MAX_BODY_BYTES = 16_384;
+
+/**
  * POST /api/escalations — persist one minimal support lead (ADR-005).
  *
  * Cheap gates run in strict order before the single write:
- * 1. shape validation of the minimal fields (400 on failure),
- * 2. the shared per-IP/global limiter AND a per-IP daily escalation cap
- *    (429 on either), so this write path cannot be used to spam the table,
- * 3. the validated insert, with the server stamping the consent timestamp.
+ * 1. header checks (JSON content type, bounded content length),
+ * 2. the per-IP daily escalation cap — checked BEFORE parsing the body, and
+ *    the ONLY limiter on this route: the chat limiter's global counter guards
+ *    model spend (ADR-006) and this route spends no model, so escalation
+ *    traffic must not be able to exhaust it and block /api/chat,
+ * 3. shape validation of the minimal fields (400 on failure),
+ * 4. the validated insert, with the server stamping the consent timestamp.
  * If the durable store fails, the user is always handed the verified
  * direct-contact fallback (ADR-005) rather than a raw error.
  */
 export async function POST(req: NextRequest) {
+  const contentType = req.headers.get("content-type") ?? "";
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (!contentType.includes("application/json") || contentLength > MAX_BODY_BYTES) {
+    return jsonResult(
+      {
+        ok: false,
+        code: "invalid",
+        message: "Request must be JSON with name, email, question, and consent.",
+      },
+      400,
+    );
+  }
+
   let input;
   try {
     const body = await req.json();
@@ -37,15 +59,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ip = clientIp(req);
-  // Both gates: the shared abuse limiter (ADR-006) and the per-IP daily
-  // escalation cap (ADR-005). Either one blocking is a 429 with Retry-After.
-  const [general, escalation] = await Promise.all([
-    checkRateLimit(ip),
-    checkEscalationLimit(ip),
-  ]);
-  const blocked = !general.ok ? general : !escalation.ok ? escalation : null;
-  if (blocked) {
+  // The cap runs after validation so it is consumed only by well-formed
+  // submissions — three typos must not lock a legitimate user out for a day.
+  // (Malformed spam is bounded by the content-length gate above; parsing a
+  // <=16KB body is trivial.)
+  const escalation = await checkEscalationLimit(clientIp(req));
+  if (!escalation.ok) {
     const contacts = knowledgeBase.verified_contacts;
     return jsonResult(
       {
@@ -57,7 +76,7 @@ export async function POST(req: NextRequest) {
           `${contacts.phone}.`,
       },
       429,
-      { "Retry-After": String(blocked.retryAfterSeconds) },
+      { "Retry-After": String(escalation.retryAfterSeconds) },
     );
   }
 
