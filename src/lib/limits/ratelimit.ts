@@ -22,6 +22,7 @@ const IP_WINDOW_MS = 60_000; // "1 m"
 interface Config {
   perIp: number;
   globalPerDay: number;
+  escalationsPerIpPerDay: number;
   redisUrl?: string;
   redisToken?: string;
 }
@@ -35,10 +36,16 @@ interface UpstashLimiters {
 // before the module observes the environment.
 let cachedConfig: Config | null = null;
 let cachedLimiters: UpstashLimiters | null = null;
+// The escalation limiter is a distinct daily-per-IP gate on a different route
+// (ADR-005 spam control), constructed separately from the chat limiters so the
+// chat path's two-gate construction is unchanged.
+let cachedEscalationLimiter: Ratelimit | null = null;
 
 // In-memory fallback state (local dev only; not durable across instances).
 const ipHits = new Map<string, number[]>();
 let globalCounter: { date: string; count: number } | null = null;
+// Per-IP daily escalation counters, keyed by IP -> { UTC date, count }.
+const escalationHits = new Map<string, { date: string; count: number }>();
 let warnedInMemory = false;
 
 function readIntEnv(name: string, fallback: number): number {
@@ -53,6 +60,10 @@ function getConfig(): Config {
   cachedConfig = {
     perIp: readIntEnv("RATE_LIMIT_PER_IP_PER_MINUTE", 10),
     globalPerDay: readIntEnv("RATE_LIMIT_GLOBAL_PER_DAY", 400),
+    escalationsPerIpPerDay: readIntEnv(
+      "RATE_LIMIT_ESCALATIONS_PER_IP_PER_DAY",
+      3,
+    ),
     redisUrl: process.env.UPSTASH_REDIS_REST_URL || undefined,
     redisToken: process.env.UPSTASH_REDIS_REST_TOKEN || undefined,
   };
@@ -136,6 +147,92 @@ async function checkUpstash(
   }
 }
 
+/**
+ * Per-IP daily cap on escalation submissions (ADR-005 spam control). This runs
+ * in addition to the chat-style per-IP/global gate on the escalations route: a
+ * single client may file only a few leads per day. Same durable-Redis-preferred,
+ * fail-closed, in-memory-fallback semantics as checkRateLimit; it is handed only
+ * an IP and never sees the submission.
+ */
+export async function checkEscalationLimit(
+  ip: string,
+): Promise<RateLimitResult> {
+  const config = getConfig();
+  if (config.redisUrl && config.redisToken) {
+    return checkEscalationUpstash(ip, config);
+  }
+  return checkEscalationInMemory(ip, config);
+}
+
+function getEscalationLimiter(config: Config): Ratelimit {
+  if (cachedEscalationLimiter) return cachedEscalationLimiter;
+  const redis = new Redis({
+    url: config.redisUrl!,
+    token: config.redisToken!,
+  });
+  cachedEscalationLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.fixedWindow(config.escalationsPerIpPerDay, "1 d"),
+    prefix: "rl:esc",
+    analytics: false,
+  });
+  return cachedEscalationLimiter;
+}
+
+async function checkEscalationUpstash(
+  ip: string,
+  config: Config,
+): Promise<RateLimitResult> {
+  try {
+    const limiter = getEscalationLimiter(config);
+    const result = await limiter.limit(ip);
+    if (!result.success) {
+      return {
+        ok: false,
+        scope: "ip",
+        retryAfterSeconds: retryAfterFromReset(result.reset),
+      };
+    }
+    return { ok: true };
+  } catch (error) {
+    // FAIL CLOSED, matching the chat limiter: a Redis outage must not open an
+    // unbounded write path to the escalations table. The route renders this as a
+    // friendly typed 429; we log once and never surface the error.
+    console.error(
+      "[ratelimit] Redis error on escalation limit; failing closed",
+      error,
+    );
+    return { ok: false, scope: "ip", retryAfterSeconds: 60 };
+  }
+}
+
+function checkEscalationInMemory(ip: string, config: Config): RateLimitResult {
+  if (!warnedInMemory) {
+    warnedInMemory = true;
+    console.warn(
+      "[ratelimit] UPSTASH_REDIS_REST_URL/TOKEN not set; using in-memory " +
+        "fallback (not durable across instances — production requires Upstash, ADR-006).",
+    );
+  }
+
+  const now = Date.now();
+  const today = utcDateKey(now);
+  let entry = escalationHits.get(ip);
+  if (!entry || entry.date !== today) {
+    entry = { date: today, count: 0 };
+    escalationHits.set(ip, entry);
+  }
+  if (entry.count >= config.escalationsPerIpPerDay) {
+    return {
+      ok: false,
+      scope: "ip",
+      retryAfterSeconds: secondsUntilUtcMidnight(now),
+    };
+  }
+  entry.count += 1;
+  return { ok: true };
+}
+
 function utcDateKey(nowMs: number): string {
   return new Date(nowMs).toISOString().slice(0, 10);
 }
@@ -195,7 +292,9 @@ function checkInMemory(ip: string, config: Config): RateLimitResult {
 export function resetRateLimiterForTests(): void {
   cachedConfig = null;
   cachedLimiters = null;
+  cachedEscalationLimiter = null;
   ipHits.clear();
   globalCounter = null;
+  escalationHits.clear();
   warnedInMemory = false;
 }
