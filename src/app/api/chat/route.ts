@@ -8,6 +8,7 @@ import {
 } from "@/lib/gateway/openrouter";
 import { checkRateLimit } from "@/lib/limits/ratelimit";
 import { knowledgeBase } from "@/lib/prompt/knowledge";
+import { selectActionCards } from "@/lib/actions/select";
 
 export const runtime = "nodejs";
 
@@ -61,17 +62,28 @@ export async function POST(req: NextRequest) {
 /** Stream the real model response as NDJSON events. */
 function streamModelResponse(messages: ChatMessage[], signal: AbortSignal) {
   const { system, messages: recent } = assemblePrompt(messages);
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = makeSender(controller);
       try {
+        let responseText = "";
         for await (const delta of streamChatCompletion({
           system,
           messages: recent,
           signal,
         })) {
+          responseText += delta;
           send({ type: "text", delta });
+        }
+        // Deterministic card selection (ADR-004): derived from the turn's
+        // text server-side, never model-emitted.
+        for (const card of selectActionCards(
+          lastUser?.content ?? "",
+          responseText,
+        )) {
+          send({ type: "action", card });
         }
         send({ type: "done" });
       } catch (err) {
@@ -113,15 +125,10 @@ function streamMockResponse(messages: ChatMessage[]) {
         send({ type: "text", delta: word });
         await new Promise((r) => setTimeout(r, 15));
       }
-      send({
-        type: "action",
-        card: {
-          kind: "strategy_contact",
-          title: "Talk with an AI strategist",
-          body: "The fastest way to get real answers about your use case.",
-          url: knowledgeBase.verified_contacts.contact_url,
-        },
-      });
+      // The mock exercises the same deterministic selector as the real path.
+      for (const card of selectActionCards(lastUser?.content ?? "", reply)) {
+        send({ type: "action", card });
+      }
       send({ type: "done" });
       controller.close();
     },
