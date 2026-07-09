@@ -54,12 +54,16 @@ const INTENTS: ReadonlyArray<{
 ];
 
 /**
- * The bot could not answer: it disclaimed knowledge or pointed the user to a
- * human. Only consulted when no informational intent matched, so an on-topic
- * answer with a card never also raises an escalation.
+ * The bot could not answer: it disclaimed knowledge. Only consulted when no
+ * informational intent matched, so an on-topic answer with a card never also
+ * raises an escalation. Deliberately EXCLUDES contact-offer phrasing
+ * ("reach out", "recommend contacting"): the system prompt tells the model to
+ * offer the contact route in healthy answers too, so those phrases signal
+ * nothing — the first live-model turn proved a fully-answered question would
+ * otherwise grow an escalation form.
  */
 const ESCALATION_SIGNAL =
-  /\b(don't have|do not have|can't|cannot|not able|no information|not published|not something i|outside|recommend (contacting|reaching)|reach out)\b/i;
+  /\b(don't have|do not have|can't|cannot|not able|no information|not published|not something i|outside)\b/i;
 
 const ESCALATION_CARD: ActionCard = {
   kind: "escalation",

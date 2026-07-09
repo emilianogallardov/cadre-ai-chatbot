@@ -84,6 +84,19 @@ describe("selectActionCards", () => {
     expect(cards).toEqual([]);
   });
 
+  it("does not escalate on a healthy answer that offers the contact route", () => {
+    // Regression from the first live-model turn: the system prompt makes the
+    // model close good answers with a contact offer; that phrasing must not
+    // read as "could not answer".
+    const cards = selectActionCards(
+      "Do you work with construction companies?",
+      "Yes, Cadre publishes dedicated experience with construction. If you'd " +
+        "like to explore fit, reach out to an AI strategist at " +
+        "https://www.cadreai.com/contact.",
+    );
+    expect(cards).toEqual([]);
+  });
+
   it("prefers an informational card over escalation", () => {
     // Assistant text carries an escalation signal, but the user asked for
     // something informational — the informational card wins and no escalation
