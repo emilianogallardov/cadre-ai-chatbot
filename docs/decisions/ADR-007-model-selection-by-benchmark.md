@@ -40,6 +40,31 @@ against the live catalog; results and the final pick are appended to this ADR.
 - The model gateway must make swapping models a config change, which is good
   architecture regardless.
 
-## Benchmark results
+## Benchmark results (2026-07-09)
 
-Pending — appended after Phase 2 wiring.
+Run via `npm run benchmark` (scripts/benchmark.ts) through the production
+gateway and prompt assembler: 8 scenario regression prompts + 2 injection
+probes per model, automated boundary checks, live OpenRouter catalog pricing.
+Full report with every response: `docs/benchmarks/2026-07-09-model-benchmark.md`.
+
+| Model | Checks | Median first-token | Median total | Est. suite cost |
+|---|---|---|---|---|
+| `anthropic/claude-haiku-4.5` | 10/10 | 1,184 ms | 2,436 ms | $0.0205 |
+| `openai/gpt-5-mini` | 10/10 | 5,699 ms | 6,550 ms | $0.0049 |
+| `anthropic/claude-sonnet-4.5` | 10/10 | 1,357 ms | 3,431 ms | $0.0607 |
+
+**Amendment to the selection rule, made after seeing these results and
+documented as such:** every candidate passed correctness and boundary checks,
+and the cost-only rule would have selected `gpt-5-mini`. But the results
+exposed a criterion the original rule omitted — responsiveness. A median 5.7 s
+of dead air before the first streamed token reads as a broken chat, and the
+opt-in voice output (ADR-003) compounds it because speech waits for stream
+completion. Selection criteria now: **cheapest model that passes every
+scenario/boundary check AND has a median first-token latency ≤ 3 s.**
+
+**Selected: `anthropic/claude-haiku-4.5`** (~$0.002 per turn; the metered $5
+key buys roughly 2,400 turns). **Fallback (`OPENROUTER_FALLBACK_MODEL`):**
+`anthropic/claude-sonnet-4.5`, the only other candidate passing all criteria —
+an unbenchmarked model never answers (gateway fallback policy).
+`openai/gpt-5-mini` remains the recorded cost floor if response latency ever
+stops mattering (e.g. an async/email channel).
