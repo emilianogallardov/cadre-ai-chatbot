@@ -83,8 +83,9 @@ Exit: a working mock chat is live on the public URL — day 1.
       permissive in-memory fallback is live in prod until they are provisioned)
 - [x] Streaming with abort/retry; provider errors become typed, friendly states
       (`efa62b8` gateway + `3f29276` route; client stop/retry normalized in `ccd1fa5`)
-- [ ] Model benchmark across 3 candidates; record results in ADR-007; select model
-      (blocked on `OPENROUTER_API_KEY` in Vercel)
+- [x] Model benchmark across 3 candidates; record results in ADR-007; select model
+      (`7a43d53`: all 3 passed 10/10; responsiveness gate added openly post-results;
+      selected claude-haiku-4.5, fallback claude-sonnet-4.5)
 
 Exit: factual scenarios pass against the live model within budget caps.
 
