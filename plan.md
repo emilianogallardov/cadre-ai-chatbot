@@ -2,8 +2,9 @@
 
 Goal: ship a publicly deployed Cadre AI support chatbot that handles the six
 evaluated scenarios with grounded answers, explicit boundaries, and a verified
-human-contact path. Submission target: Friday morning, 2026-07-10, at least one
-business day before the review.
+human-contact path. Submission target: Saturday 2026-07-11 (hard deadline
+Monday 2026-07-13; live review Tuesday morning 2026-07-14) — updated from the
+original Friday target when the owner added ADR-008 scope on 2026-07-10.
 
 Status legend: `[ ]` pending · `[x]` done and verified · `[~]` in progress.
 This file is updated when reality diverges; the append-only history lives in
@@ -15,6 +16,9 @@ This file is updated when reality diverges; the append-only history lives in
 - Curated Cadre knowledge with sources (`data/curated/knowledge-base.json`)
 - Typed actions: strategy contact, Maturity Index path, portal help, escalation
 - Real consented escalation persistence (Supabase, minimal schema, 30-day retention)
+- Conversation storage with privacy by construction (ADR-008, added 2026-07-10):
+  notice at collection, /privacy page, honest private mode, delete-this-chat,
+  pg_cron-enforced retention, signed conversation ids, escalation-lead linking
 - Unknown-answer, provider-error, and rate-limit handling as designed UI states
 - Public Vercel deployment with Upstash rate/spend protection
 - Optional browser voice (Web Speech API) only after text scenarios pass
@@ -24,7 +28,9 @@ This file is updated when reality diverges; the append-only history lives in
 
 - Authentication or a portal replica (ADR-002) — no scenario needs identity;
   cutting it removes a half-day of invented scope
-- Persistent chat history (ADR-002) — privacy obligations without user benefit
+- ~~Persistent chat history (ADR-002)~~ — SUPERSEDED 2026-07-10 by ADR-008:
+  the owner reversed this cut for escalation-lead context and content-gap
+  signal, with the privacy obligations met by construction rather than avoided
 - Vector DB / RAG (ADR-001) — curated corpus is ~12 entries; retrieval adds
   latency and failure modes with zero recall benefit at this size
 - Unverified calendar/portal integrations — no public scheduler or login URL
@@ -145,3 +151,25 @@ Exit: voice adds value without becoming a dependency.
 
 Exit: every completion claim has evidence; no changes after submission without
 a documented reason.
+
+## Phase 6: Conversation storage + privacy (owner-added scope, 2026-07-10)
+
+- [x] ADR-008 accepted; Codex adversarial DESIGN review before any build
+      (13/13 findings accepted as inputs) (T-041, `80d6335`)
+- [x] Signed conversation tokens, PostgREST store, migration with RLS +
+      pg_cron retention (builder subagents to pinned contracts; orchestrator
+      re-verified and committed) (T-042, `ebd3f28`)
+- [x] Server seams: after() turn writes, DELETE route, escalation linking,
+      /privacy page, KB truth-update (T-042, `dc4ee99`)
+- [x] Client plumbing: notice at collection, Private toggle, Delete chat,
+      token echo (T-042/T-044 fixes, `10ab4fb`)
+- [x] Codex IMPLEMENTATION review round 2 — 8/8 findings accepted and closed
+      (T-044, `1ebdfa3`)
+- [x] Cloud migration applied + proven: RLS anon probes, cron jobs, re-apply
+      idempotency; full storage lifecycle E2E local AND prod (T-042/T-044)
+- [x] Post-ADR-008 live regression on prod: 6 scenarios + boundaries +
+      privacy self-description + private-mode + common inquiries (T-046,
+      docs/verification/2026-07-10-requirements-verification.md)
+
+Exit: every privacy claim is enforced in code and the bot describes its own
+practices accurately on the live site.

@@ -1,6 +1,9 @@
 # ADR-002: No Authentication or Persistent Transcripts in the MVP
 
-- Status: Accepted
+- Status: Accepted; **partially superseded by
+  [ADR-008](ADR-008-conversation-storage-with-private-mode.md)
+  (2026-07-10)**, which reverses the no-persistent-transcripts half. The
+  no-authentication half stands.
 - Date: 2026-07-08
 
 ## Context

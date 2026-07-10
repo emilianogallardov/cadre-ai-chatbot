@@ -73,6 +73,31 @@ selector deliberately favors offering a human over staying silent).
 - Cross-review: Codex design round 13/13 accepted; implementation round 8/8 accepted, all closed (docs/reviews/) ✅
 - Timeline: append-only through T-044 with evidence per entry ✅
 
+## Independent rubric audit (212-item planning checklist)
+
+A read-only verifier audited every item of the planning package's
+RUBRIC-CHECKLIST.md against the repo and live site, and independently re-ran
+the verify gate (exit 0). Zero UNMET items survive in the submission-gate and
+product sections after the same-hour fixes:
+
+- **Doc drift fixed**: CLAUDE.md (ADR-008 listed; phantom "zod schemas" /
+  "create_escalation tool" claims replaced with the real hand-rolled
+  validation and the three actual server-side mutations; transcript boundary
+  rewritten in ADR-008 terms), plan.md (Saturday target, ADR-008 scope,
+  superseded cut annotated, Phase 6), ADR-002 supersession header.
+- **Self-resolved**: the "dirty tree" finding — the parallel UI workstream
+  landed markdown replies + full-bleed frame (`ef8fc09`); suite 192/192.
+- **Accepted degradations (documented, not blockers)**: in-memory rate-limit
+  fallback in prod (Upstash unprovisioned — README/ADR-006); no automated
+  browser-E2E suite (manual T-043 verification + unit-tested scroll/suppression
+  logic); scenario coverage via benchmark harness + live regression rather
+  than a committed vitest scenario suite.
+- **Deliberate risk, absorbed**: ADR-008 was architecture change close to
+  submission — the exact thing the checklist warns against. The owner moved
+  the target from Friday to Saturday specifically to absorb it, and it shipped
+  with two adversarial reviews and a full re-regression. Named honestly here
+  rather than hidden.
+
 ## OPEN items for submission day
 
 1. **Gem submission** (D7) — repo URL in Notes; save confirmation
@@ -80,3 +105,8 @@ selector deliberately favors offering a human over staying silent).
 3. **Manual browser pass** (cannot be automated): mic input, speaker toggle, Private/Delete controls by hand, phone-sized viewport
 4. **Final secret re-scan** after the last commit, before the Gem form
 5. Optional: provision Upstash (Vercel → Storage) for a durable limiter; otherwise the documented degrade stands
+
+## Next work package (Tuesday presentation, not submission-blocking)
+
+Deterministic demo script; fallback screenshots/recording; two-three selected
+functions for the code deep-dive. All absent today; build after submission.

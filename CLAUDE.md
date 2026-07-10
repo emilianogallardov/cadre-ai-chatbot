@@ -9,17 +9,25 @@ path. Text chat is canonical; browser voice is progressive enhancement.
 
 ## Non-negotiable boundaries
 
-- Do not add authentication, RAG, persistent transcripts, or a portal replica
-  without a new accepted ADR (`docs/decisions/`).
+- Do not add authentication, RAG, or a portal replica without a new accepted
+  ADR (`docs/decisions/`). Conversation storage exists and is governed by
+  ADR-008: never weaken its privacy artifacts (notice at collection, honest
+  private mode, delete control, enforced retention) without amending that ADR,
+  and any change to what is stored must update the privacy page AND the
+  `assistant-data-practices` KB entry in the same commit — the bot must never
+  misstate its own data practices.
 - Do not invent pricing, portal URLs, calendar bookings, security
   certifications, client facts, or guaranteed outcomes — in code, prompts, or
   bot copy. The knowledge policy in `data/curated/knowledge-base.json` governs.
 - The model receives only the curated knowledge layer, never raw site crawl.
-- Model-requested actions execute only after server-side schema validation
-  against the tool allowlist (ADR-004).
-- Secrets (OpenRouter, Supabase, Upstash) are server-only environment
-  variables. Never in client code, git, logs, or the timeline.
-- Every model-spending route sits behind the Upstash limiter (ADR-006).
+- Action cards are selected deterministically server-side from the turn's
+  text (ADR-004) — never model-emitted; card URLs come only from verified
+  contacts.
+- Secrets (OpenRouter, Supabase, Upstash, conversation signing) are
+  server-only environment variables. Never in client code, git, logs, or the
+  timeline.
+- Every model-spending route sits behind the rate limiter (ADR-006,
+  fail-closed).
 - Text chat must remain fully functional when voice is unavailable.
 
 ## Source of truth
@@ -28,7 +36,7 @@ path. Text chat is canonical; browser voice is progressive enhancement.
 - Timeline protocol: `docs/process/timeline-protocol.md`
 - Plan and scope: `plan.md`
 - Product design: `docs/plans/2026-07-08-cadre-support-agent-design.md`
-- Decisions: `docs/decisions/` (ADR-001 … ADR-007)
+- Decisions: `docs/decisions/` (ADR-001 … ADR-008)
 - Curated knowledge: `data/curated/knowledge-base.json`
 - Scenario coverage / regression prompts: `data/curated/scenario-coverage.md`
 
@@ -71,8 +79,10 @@ the phase — do not fake results.)
   a config change.
 - Prompt assembly (`lib/prompt/`) is separate from request handling
   (`app/api/`).
-- Tools have explicit zod schemas and an allowlisted dispatcher; only
-  `create_escalation` mutates data, server-side only.
+- Validation is hand-rolled, typed TypeScript at every route boundary (no
+  schema library). Mutations are server-side only: the consented escalation
+  lead write, the post-stream conversation write, and the signed-token
+  conversation delete — each behind its own validation and limits.
 - Knowledge entries retain source URLs and a review date.
 - Provider, rate-limit, and validation failures map to typed, user-safe
   responses — never raw errors to the client.
