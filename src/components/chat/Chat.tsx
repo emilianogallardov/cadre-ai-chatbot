@@ -24,6 +24,7 @@ import {
   writePrivateMode,
 } from "./conversationStorage";
 import { Composer } from "./Composer";
+import { hasSubmittedEscalation } from "./EscalationCard";
 import { SuggestedPrompts } from "./SuggestedPrompts";
 import { Transcript } from "./Transcript";
 import { useSpeechOutput } from "./useSpeechOutput";
@@ -189,6 +190,11 @@ export function Chat() {
             return next;
           });
         } else if (event.type === "action") {
+          // One submitted follow-up covers the session; stop offering new
+          // escalation forms (already-rendered ones stay in the transcript).
+          if (event.card.kind === "escalation" && hasSubmittedEscalation()) {
+            return;
+          }
           setItems((prev) => {
             const next = [...prev];
             const last = next[next.length - 1];

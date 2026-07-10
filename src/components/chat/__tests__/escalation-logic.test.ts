@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   canSubmit,
   GENERIC_FAILURE,
+  hasSubmittedEscalation,
   outcomeFromResponse,
   type EscalationFields,
 } from "../EscalationCard";
@@ -69,4 +70,45 @@ describe("outcomeFromResponse", () => {
       });
     },
   );
+});
+
+describe("hasSubmittedEscalation", () => {
+  function stubSessionStorage(value: string | null) {
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => value,
+      setItem: () => undefined,
+    });
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("is false before any submission", () => {
+    stubSessionStorage(null);
+    expect(hasSubmittedEscalation()).toBe(false);
+    stubSessionStorage("0");
+    expect(hasSubmittedEscalation()).toBe(false);
+  });
+
+  it("is true once a submission has been recorded", () => {
+    stubSessionStorage("1");
+    expect(hasSubmittedEscalation()).toBe(true);
+    stubSessionStorage("2");
+    expect(hasSubmittedEscalation()).toBe(true);
+  });
+
+  it("treats a corrupted counter as no submissions", () => {
+    stubSessionStorage("not-a-number");
+    expect(hasSubmittedEscalation()).toBe(false);
+  });
+
+  it("is false when storage is unavailable and nothing was submitted", () => {
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => {
+        throw new Error("storage disabled");
+      },
+    });
+    expect(hasSubmittedEscalation()).toBe(false);
+  });
 });

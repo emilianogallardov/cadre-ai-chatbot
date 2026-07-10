@@ -39,6 +39,15 @@ function recordSubmission(): void {
   }
 }
 
+/**
+ * True once any follow-up request was successfully submitted this browser
+ * session. The transcript uses this to stop offering NEW escalation forms —
+ * one submitted request already covers the conversation.
+ */
+export function hasSubmittedEscalation(): boolean {
+  return submissionCount() > 0;
+}
+
 const MAX = { name: 100, email: 254, question: 2000 } as const;
 
 export interface EscalationFields {
@@ -92,7 +101,7 @@ const cardFrame =
   "mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900";
 
 const fieldClass =
-  "mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
+  "mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
 
 const labelClass =
   "block text-xs font-medium text-zinc-600 dark:text-zinc-400";
@@ -262,7 +271,7 @@ export function EscalationCard({ card }: { card: ActionCard }) {
         <button
           type="submit"
           disabled={sending || !ready}
-          className="mt-1 self-start rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+          className="mt-1 cursor-pointer self-start rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
         >
           {sending ? "Sending…" : "Request follow-up"}
         </button>
