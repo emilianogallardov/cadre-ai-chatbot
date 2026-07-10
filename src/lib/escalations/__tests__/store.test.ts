@@ -12,6 +12,7 @@ const record: EscalationRecord = {
   question: "Do you help with strategy?",
   consent: true,
   consented_at: "2026-07-09T12:00:00.000Z",
+  conversation_id: null,
 };
 
 const SUPABASE = {
@@ -72,6 +73,7 @@ describe("SupabaseRestStore (env present)", () => {
       email: record.email,
       question: record.question,
       consented_at: record.consented_at,
+      conversation_id: null,
       status: "new",
     });
   });

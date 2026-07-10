@@ -4,6 +4,8 @@ import { validateEscalation, ValidationError } from "@/lib/escalations/validate"
 import { getEscalationStore, StoreError } from "@/lib/escalations/store";
 import { checkEscalationLimit } from "@/lib/limits/ratelimit";
 import { knowledgeBase } from "@/lib/prompt/knowledge";
+import { verifyConversationToken } from "@/lib/conversations/token";
+import { linkConversation } from "@/lib/conversations/store";
 
 export const runtime = "nodejs";
 
@@ -42,8 +44,11 @@ export async function POST(req: NextRequest) {
   }
 
   let input;
+  let conversationToken: unknown;
   try {
     const body = await req.json();
+    conversationToken = (body as { conversationToken?: unknown })
+      ?.conversationToken;
     input = validateEscalation(body);
   } catch (err) {
     return jsonResult(
@@ -80,12 +85,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Conversation link (ADR-008): only a validly signed token names a
+  // conversation, and the row is upserted BEFORE the lead insert so the FK can
+  // never race the post-stream transcript write. A failed upsert degrades to an
+  // unlinked lead — the link is context, never worth losing the lead over.
+  const conversationId = verifyConversationToken(conversationToken);
+  const linked =
+    conversationId !== null && (await linkConversation(conversationId));
+
   try {
     // The server records the consent timestamp; it is never client-supplied.
     const store = getEscalationStore();
     const { referenceId } = await store.insert({
       ...input,
       consented_at: new Date().toISOString(),
+      conversation_id: linked ? conversationId : null,
     });
     return jsonResult({ ok: true, referenceId }, 200);
   } catch (err) {

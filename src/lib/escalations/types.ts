@@ -20,6 +20,12 @@ export interface EscalationInput {
 export interface EscalationRecord extends EscalationInput {
   /** ISO-8601 instant the server recorded consent (never client-supplied). */
   consented_at: string;
+  /**
+   * Link to the originating conversation (ADR-008), derived server-side from a
+   * verified signed token — never a raw client id. Null when the visitor is in
+   * private mode, sent no token, or the token failed verification.
+   */
+  conversation_id: string | null;
 }
 
 /** Typed, user-safe outcome of POST /api/escalations. */

@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import { ChatMessage, ErrorCode, StreamEvent } from "@/lib/chat/types";
 import { validateMessages, ValidationError } from "@/lib/chat/validate";
 import { assemblePrompt } from "@/lib/prompt/assemble";
@@ -9,8 +9,73 @@ import {
 import { checkRateLimit } from "@/lib/limits/ratelimit";
 import { knowledgeBase } from "@/lib/prompt/knowledge";
 import { selectActionCards } from "@/lib/actions/select";
+import {
+  isStorageConfigured,
+  mintConversationToken,
+  verifyConversationToken,
+} from "@/lib/conversations/token";
+import { storeTurn } from "@/lib/conversations/store";
 
 export const runtime = "nodejs";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Storage decision for one request (ADR-008). Resolved BEFORE streaming so the
+ * `conversation` event can be emitted on the same response. Private mode or an
+ * unconfigured store yields the do-nothing plan; an invalid/missing token is
+ * silently a new conversation, never an error.
+ */
+function planStorage(body: {
+  conversationToken?: unknown;
+  private?: unknown;
+  turnId?: unknown;
+}): {
+  conversationId: string | null;
+  /** Set when the server minted a fresh token the client must be told about. */
+  mintedToken: string | null;
+  turnId: string | null;
+} {
+  if (body.private === true || !isStorageConfigured()) {
+    return { conversationId: null, mintedToken: null, turnId: null };
+  }
+  const turnId =
+    typeof body.turnId === "string" && UUID_RE.test(body.turnId)
+      ? body.turnId
+      : null;
+  if (!turnId) {
+    // Without a dedup key a client retry would double-store the turn; a
+    // storage-aware client always sends one, so treat its absence as opt-out.
+    return { conversationId: null, mintedToken: null, turnId: null };
+  }
+  const existing = verifyConversationToken(body.conversationToken);
+  if (existing) return { conversationId: existing, mintedToken: null, turnId };
+  const minted = mintConversationToken();
+  return {
+    conversationId: minted.slice(0, minted.indexOf(".")),
+    mintedToken: minted,
+    turnId,
+  };
+}
+
+/**
+ * Persist the completed turn after the response is sent (Vercel-safe via
+ * `after()`); plain fire-and-forget can be dropped when the function ends.
+ * Empty texts are skipped — the messages CHECK constraint requires content.
+ */
+function scheduleStoreTurn(
+  plan: ReturnType<typeof planStorage>,
+  userText: string,
+  assistantText: string,
+) {
+  if (!plan.conversationId || !plan.turnId) return;
+  if (!userText || !assistantText) return;
+  const { conversationId, turnId } = plan;
+  after(() =>
+    storeTurn({ conversationId, turnId, userText, assistantText }),
+  );
+}
 
 /**
  * POST /api/chat — the only model-spending route.
@@ -25,9 +90,16 @@ export const runtime = "nodejs";
  */
 export async function POST(req: NextRequest) {
   let messages: ChatMessage[];
+  let storagePlan: ReturnType<typeof planStorage>;
   try {
-    const body = (await req.json()) as { messages?: unknown };
+    const body = (await req.json()) as {
+      messages?: unknown;
+      conversationToken?: unknown;
+      private?: unknown;
+      turnId?: unknown;
+    };
     messages = validateMessages(body.messages);
+    storagePlan = planStorage(body);
   } catch (err) {
     return errorResponse(
       "invalid_request",
@@ -55,12 +127,16 @@ export async function POST(req: NextRequest) {
   }
 
   return isGatewayConfigured()
-    ? streamModelResponse(messages, req.signal)
-    : streamMockResponse(messages);
+    ? streamModelResponse(messages, req.signal, storagePlan)
+    : streamMockResponse(messages, storagePlan);
 }
 
 /** Stream the real model response as NDJSON events. */
-function streamModelResponse(messages: ChatMessage[], signal: AbortSignal) {
+function streamModelResponse(
+  messages: ChatMessage[],
+  signal: AbortSignal,
+  storagePlan: ReturnType<typeof planStorage>,
+) {
   const { system, messages: recent } = assemblePrompt(messages);
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
 
@@ -85,6 +161,10 @@ function streamModelResponse(messages: ChatMessage[], signal: AbortSignal) {
         )) {
           send({ type: "action", card });
         }
+        if (storagePlan.mintedToken) {
+          send({ type: "conversation", token: storagePlan.mintedToken });
+        }
+        scheduleStoreTurn(storagePlan, lastUser?.content ?? "", responseText);
         send({ type: "done" });
       } catch (err) {
         if (isAbort(err)) {
@@ -114,7 +194,10 @@ function streamModelResponse(messages: ChatMessage[], signal: AbortSignal) {
 }
 
 /** Phase 1 mock, kept as the keyless fallback (same wire protocol). */
-function streamMockResponse(messages: ChatMessage[]) {
+function streamMockResponse(
+  messages: ChatMessage[],
+  storagePlan: ReturnType<typeof planStorage>,
+) {
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   const reply = mockReply(lastUser?.content ?? "");
 
@@ -129,6 +212,12 @@ function streamMockResponse(messages: ChatMessage[]) {
       for (const card of selectActionCards(lastUser?.content ?? "", reply)) {
         send({ type: "action", card });
       }
+      // Storage runs on the mock path too (when configured): the full ADR-008
+      // flow stays testable without model spend.
+      if (storagePlan.mintedToken) {
+        send({ type: "conversation", token: storagePlan.mintedToken });
+      }
+      scheduleStoreTurn(storagePlan, lastUser?.content ?? "", reply);
       send({ type: "done" });
       controller.close();
     },

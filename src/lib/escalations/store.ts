@@ -61,6 +61,7 @@ class SupabaseRestStore implements EscalationStore {
         email: record.email,
         question: record.question,
         consented_at: record.consented_at,
+        conversation_id: record.conversation_id,
         status: "new",
       }),
     });

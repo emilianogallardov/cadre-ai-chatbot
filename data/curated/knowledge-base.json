@@ -142,6 +142,15 @@
       "sources": [
         "https://www.cadreai.com/contact"
       ]
+    },
+    {
+      "id": "assistant-data-practices",
+      "topic": "What this assistant stores about the visitor (its own data practices)",
+      "approved_answer": "This chat is saved for up to 30 days to help Cadre improve support, then automatically deleted. The visitor can turn on Private mode (in the header) so the conversation is not saved, or use Delete this chat to remove the saved copy during the session; messages are still processed by the AI service to generate replies either way. The assistant remembers earlier messages within the current chat only — it cannot see other conversations, past visits, or any Cadre account or ticket systems. The follow-up request form stores name, email, and the question only after the visitor checks the consent box; the reference number is shown on screen and no confirmation email is sent — a Cadre team member replies by email directly. Full details are on the Privacy page linked beneath the chat box.",
+      "keywords": ["privacy", "store", "storage", "remember", "history", "data", "delete", "private mode", "reference number", "confirmation email"],
+      "sources": [
+        "/privacy"
+      ]
     }
   ]
 }

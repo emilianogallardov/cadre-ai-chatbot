@@ -26,6 +26,12 @@ export interface ActionCard {
 export type StreamEvent =
   | { type: "text"; delta: string }
   | { type: "action"; card: ActionCard }
+  /**
+   * Sent once, before `done`, when the server minted a new conversation because
+   * the client had no valid token (ADR-008). The client stores the signed token
+   * and echoes it back on later turns so writes land in the same conversation.
+   */
+  | { type: "conversation"; token: string }
   | { type: "done" }
   | { type: "error"; code: ErrorCode; message: string };
 
@@ -38,6 +44,15 @@ export type ErrorCode =
 /** Request body accepted by POST /api/chat. */
 export interface ChatRequest {
   messages: ChatMessage[];
+  /**
+   * Storage plumbing (ADR-008), all optional so a client that never stores
+   * still sends a valid request. `conversationToken` is the server-minted,
+   * signed id echoed from a prior turn; `private` suppresses transcript writes;
+   * `turnId` deduplicates the user+assistant pair under a unique index.
+   */
+  conversationToken?: string;
+  private?: boolean;
+  turnId?: string;
 }
 
 /**
