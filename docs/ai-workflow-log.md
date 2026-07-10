@@ -156,3 +156,22 @@ tests, lint, typecheck, production build.
   the UI; limiter placement moved *after* validation against Codex's suggestion.
 - **Rejected / declined:** narrowing the intent regexes — broad-term strategist
   cards are intended consultancy UX; documented instead of changed.
+
+## Phase 6 — conversation storage design (2026-07-10, pre-build)
+
+- **Trigger:** product-owner decision to flip ADR-002 (store conversations by
+  default with notice + private mode) after seeing live-model behavior; new
+  timeline (submit Saturday, hard deadline Monday, presentation Tuesday).
+- **Codex (GPT-5.5, read-only) as design reviewer, before any code:** the full
+  design section (data model, flow, privacy posture) was front-loaded into a
+  stateless review with explicit privacy/data-requirements instructions.
+  13 findings returned; **all 13 accepted** (2 reduced in scope) — unusual for
+  this project's reviews, and a direct consequence of reviewing a design
+  instead of a diff: every acceptance became a build input rather than a
+  retrofit. Full adjudication:
+  `docs/reviews/2026-07-10-codex-adr008-design-review.md`.
+- **Live-transcript audit as design input:** the owner's first real prod
+  conversation (11 turns) was audited turn-by-turn; its three findings
+  (escalation-card over-firing, KB self-description staleness under ADR-008,
+  phantom confirmation-email implication) were folded into the same build
+  scope.
