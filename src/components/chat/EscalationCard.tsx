@@ -2,6 +2,11 @@
 
 import { useId, useRef, useState } from "react";
 import type { ActionCard } from "@/lib/chat/types";
+import {
+  linkedConversationToken,
+  readConversationToken,
+  readPrivateMode,
+} from "./conversationStorage";
 
 export const CONTACT_EMAIL = "hello@gocadre.ai";
 
@@ -127,6 +132,13 @@ export function EscalationCard({ card }: { card: ActionCard }) {
     inFlight.current = true;
     setPhase({ name: "sending" });
     try {
+      // Link the lead to the stored conversation only when private mode is off
+      // and a token exists (ADR-008 #8). Private escalations are still stored,
+      // just unlinked. Read at submit time so a mid-conversation toggle wins.
+      const conversationToken = linkedConversationToken(
+        readPrivateMode(),
+        readConversationToken(),
+      );
       const res = await fetch("/api/escalations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -135,6 +147,7 @@ export function EscalationCard({ card }: { card: ActionCard }) {
           email: email.trim(),
           question: question.trim(),
           consent: true,
+          ...(conversationToken ? { conversationToken } : {}),
         }),
       });
       const outcome = outcomeFromResponse(await res.json());

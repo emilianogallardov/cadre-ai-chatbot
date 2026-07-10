@@ -1,12 +1,28 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import {
+  useCallback,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type {
   ActionCard,
   ChatMessage,
   StreamEvent,
 } from "@/lib/chat/types";
 import { toPayloadMessages } from "@/lib/chat/payload";
+import {
+  buildChatRequestBody,
+  clearConversationToken,
+  deleteSucceeded,
+  noticeText,
+  readConversationToken,
+  readPrivateMode,
+  subscribeSession,
+  writeConversationToken,
+  writePrivateMode,
+} from "./conversationStorage";
 import { Composer } from "./Composer";
 import { SuggestedPrompts } from "./SuggestedPrompts";
 import { Transcript } from "./Transcript";
@@ -32,6 +48,57 @@ export function Chat() {
     cancel: cancelSpeech,
   } = useSpeechOutput();
 
+  // Conversation-storage session state (ADR-008), read from the per-tab
+  // sessionStorage-backed store. useSyncExternalStore hydrates SSR-safely
+  // (server renders the defaults, the client swaps in the stored values on
+  // hydration) and survives reloads within the tab.
+  const conversationToken = useSyncExternalStore(
+    subscribeSession,
+    readConversationToken,
+    () => null,
+  );
+  const privateMode = useSyncExternalStore(
+    subscribeSession,
+    readPrivateMode,
+    () => false,
+  );
+  const [deleting, setDeleting] = useState(false);
+  const [announce, setAnnounce] = useState<string | null>(null);
+
+  const setPrivateMode = useCallback((on: boolean) => {
+    writePrivateMode(on);
+  }, []);
+
+  const deleteConversation = useCallback(async () => {
+    const token = readConversationToken();
+    if (!token || deleting) return;
+    setDeleting(true);
+    setAnnounce(null);
+    try {
+      const res = await fetch("/api/conversations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      if (deleteSucceeded(await res.json())) {
+        // Only the server copy is deleted; the on-screen transcript stays so the
+        // visitor can keep reading it.
+        clearConversationToken();
+        setAnnounce("This chat was deleted from Cadre's records.");
+      } else {
+        setAnnounce(
+          "Couldn't delete this chat just now. Please try again in a moment.",
+        );
+      }
+    } catch {
+      setAnnounce(
+        "Couldn't delete this chat just now. Please try again in a moment.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleting]);
+
   const send = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
@@ -48,17 +115,24 @@ export function Chat() {
       setItems([...history, { message: { role: "assistant", content: "" } }]);
       setStatus("streaming");
       setErrorText(null);
+      setAnnounce(null);
 
       const controller = new AbortController();
       abortRef.current = controller;
+      const turnId = crypto.randomUUID();
 
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: toPayloadMessages(history.map((i) => i.message)),
-          }),
+          body: JSON.stringify(
+            buildChatRequestBody({
+              messages: toPayloadMessages(history.map((i) => i.message)),
+              turnId,
+              conversationToken,
+              privateMode,
+            }),
+          ),
           signal: controller.signal,
         });
         if (!res.body) throw new Error("Empty response body.");
@@ -124,6 +198,10 @@ export function Chat() {
             };
             return next;
           });
+        } else if (event.type === "conversation") {
+          // Server minted a new conversation; remember its signed token so later
+          // turns and the delete control target the same server-side record.
+          writeConversationToken(event.token);
         } else if (event.type === "done") {
           // Read the completed reply once, only if output is enabled.
           speak(assistantText);
@@ -132,7 +210,7 @@ export function Chat() {
         }
       }
     },
-    [items, status, cancelSpeech, speak],
+    [items, status, cancelSpeech, speak, conversationToken, privateMode],
   );
 
   const stop = useCallback(() => {
@@ -150,36 +228,65 @@ export function Chat() {
             with an AI strategist.
           </p>
         </div>
-        {speechSupported && (
+        <div className="mt-0.5 flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => setSpeechEnabled(!speechEnabled)}
-            aria-label="Read replies aloud"
-            aria-pressed={speechEnabled}
-            title="Read replies aloud"
-            className={`mt-0.5 shrink-0 cursor-pointer rounded-lg border px-2.5 py-2 ${
-              speechEnabled
+            onClick={() => setPrivateMode(!privateMode)}
+            aria-label="Private mode"
+            aria-pressed={privateMode}
+            title="Private mode — Cadre won't save this chat"
+            className={`cursor-pointer rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
+              privateMode
                 ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
                 : "border-zinc-300 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
             }`}
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              {speechEnabled && <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />}
-              {speechEnabled && <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />}
-            </svg>
+            {privateMode ? "Private" : "Private off"}
           </button>
-        )}
+
+          {conversationToken && (
+            <button
+              type="button"
+              onClick={deleteConversation}
+              disabled={deleting}
+              title="Delete this chat from Cadre's records"
+              className="cursor-pointer rounded-lg border border-zinc-300 px-2.5 py-1.5 text-xs font-medium text-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400"
+            >
+              {deleting ? "Deleting…" : "Delete chat"}
+            </button>
+          )}
+
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={() => setSpeechEnabled(!speechEnabled)}
+              aria-label="Read replies aloud"
+              aria-pressed={speechEnabled}
+              title="Read replies aloud"
+              className={`cursor-pointer rounded-lg border px-2.5 py-2 ${
+                speechEnabled
+                  ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
+                  : "border-zinc-300 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
+              }`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                {speechEnabled && <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />}
+                {speechEnabled && <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />}
+              </svg>
+            </button>
+          )}
+        </div>
       </header>
 
       <Transcript items={items} streaming={status === "streaming"} />
@@ -201,6 +308,39 @@ export function Chat() {
         onStop={stop}
         streaming={status === "streaming"}
       />
+
+      <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+        {noticeText(privateMode)}{" "}
+        <a
+          href="/privacy"
+          className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
+        >
+          Privacy
+        </a>{" "}
+        ·{" "}
+        <button
+          type="button"
+          onClick={() => setPrivateMode(!privateMode)}
+          className="cursor-pointer underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
+        >
+          {privateMode ? "Turn off private mode" : "Turn on private mode"}
+        </button>
+      </p>
+
+      {/* Non-blocking feedback for delete (and other transient) actions. The
+          live region is always present so screen readers announce updates; it
+          stays empty (and visually collapsed) until there is something to say. */}
+      <p
+        role="status"
+        aria-live="polite"
+        className={
+          announce
+            ? "mb-2 text-xs text-zinc-500 dark:text-zinc-400"
+            : "sr-only"
+        }
+      >
+        {announce ?? ""}
+      </p>
     </div>
   );
 }
