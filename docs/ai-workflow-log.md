@@ -197,3 +197,21 @@ tests, lint, typecheck, production build.
   The first suppression "test" was also caught selecting the wrong form's
   submit button; the fix (scope the selector to the composer) is why the
   positive control existed at all.
+
+## Phase 6 — premium UI pass via cross-model design review (2026-07-10)
+
+- **Codex (GPT-5.6, read-only) as design reviewer before styling:** rather than
+  styling by instinct, the owner's "more premium" ask was front-loaded into a
+  constraint-rich review (no new deps, no palette change, don't touch
+  aria/scroll/storage, 375px must hold). Codex's diagnosis — flatness from
+  every region living on one plane — reframed the work as surface hierarchy
+  and framing instead of animation, and its DO-NOT list (React Bits, Framer,
+  particles, glow, new accent colors) killed the deadline-risky directions
+  before any code was written. All 8 ranked recommendations landed in one
+  commit (`741ac06`), CSS/Tailwind only.
+- **Concurrent-agent seam handling:** the review pass collided with the other
+  workstream mid-edit twice — a react-hooks lint error in their uncommitted
+  composer draft logic (fixed via render-time state adjustment so the shared
+  gate stayed green) and their verifiedLinks sanitizer defined but not yet
+  wired into the markdown render (wired in, and the new file was included in
+  the commit so main stayed self-consistent).
