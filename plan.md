@@ -124,12 +124,19 @@ Exit: voice adds value without becoming a dependency.
 
 ## Phase 5: Verification and submission (Friday AM)
 
-- [ ] Scenario regression suite automated (all six + boundary prompts)
-- [ ] Lint, typecheck, unit tests, production build all pass
-- [ ] Secret scan: repo history and client bundle
-- [ ] Live smoke test: six scenarios on the deployed URL, clean browser, mobile
-- [ ] README finalized: setup, env names, architecture, scope cuts, limitations
-- [ ] Push to fresh GitHub repo; verify reviewer access
+- [x] Scenario regression suite automated (all six + boundary prompts) —
+      benchmark harness through the production code path, plus a 9-case live
+      regression against the deployed URL with the real model (T-040)
+- [x] Lint, typecheck, unit tests, production build all pass (12 files,
+      130/130, T-040)
+- [x] Secret scan: repo history and client bundle (0 hits each, T-040)
+- [x] Live smoke test: six scenarios + boundaries on the deployed URL with the
+      live model (T-040; mobile/clean-browser pass is the remaining manual
+      user step)
+- [x] README finalized: setup, env names, architecture, scope cuts,
+      limitations (`28d9297`, T-038)
+- [x] Push to fresh GitHub repo; verify reviewer access (public; anonymous
+      fetch returns 200, T-040)
 - [ ] Submit via Gem link; repository URL in the Notes field; save confirmation
 
 Exit: every completion claim has evidence; no changes after submission without
