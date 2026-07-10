@@ -25,7 +25,7 @@ const INTENTS: ReadonlyArray<{
 }> = [
   {
     pattern:
-      /\b(book|schedul\w*|call|meet\w*|talk|speak|strategist|consult\w*|demo|get started|pricing|price|cost|quote)\b/i,
+      /\b(book|schedul\w*|call|meet\w*|talk|speak|strategist|consult\w*|demo|get started|pricing|price|cost|charge\w*|quote)\b/i,
     card: {
       kind: "strategy_contact",
       title: "Talk with an AI strategist",

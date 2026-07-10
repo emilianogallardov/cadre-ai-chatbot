@@ -28,6 +28,7 @@ describe("selectActionCards", () => {
     "I'd like to schedule a call",
     "who can I speak to about a consultation",
     "what's the price of a demo",
+    "What would Cadre charge us for a six-month engagement?",
   ])("routes %j to strategy_contact", (userText) => {
     expect(selectActionCards(userText, "")[0].kind).toBe("strategy_contact");
   });

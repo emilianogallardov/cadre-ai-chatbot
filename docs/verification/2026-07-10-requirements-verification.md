@@ -1,0 +1,82 @@
+# Requirements verification — 2026-07-10 (pre-submission)
+
+Every row states the requirement, how it was checked, and the evidence. A row
+is checked only if the verification actually ran — claims without evidence are
+listed as OPEN at the bottom. Live rows ran against the production URL with
+the real model (post-ADR-008 deploy).
+
+## Hard deliverables (submission gate)
+
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| D1 | Publicly deployed working chatbot | ✅ | https://cadre-ai-chatbot.vercel.app — live-model regression this session; GET / 200; /privacy 200 |
+| D2 | Fresh GitHub repository, reviewer-accessible | ✅ | https://github.com/emilianogallardov/cadre-ai-chatbot public; anonymous fetch 200 (T-040) |
+| D3 | Root `CLAUDE.md`, project-specific | ✅ | In repo since root commit `e1d642a`; governs boundaries/workflow/commands |
+| D4 | Root `plan.md` reflecting actual execution | ✅ | Phases 0–4 ticked with commit/timeline evidence; Phase 5 current |
+| D5 | No secrets in repo history or client bundle | ✅ | History scan 0 hits + bundle scan 0 hits (T-040); re-scan scheduled at submission |
+| D6 | README: setup, env names, architecture, scope cuts, limitations | ✅ | README.md `28d9297` + ADR-008 rewrite (T-042) |
+| D7 | Repo URL in Gem Notes; ≥1 business day before review | ⏳ OPEN | User action Saturday (review Tuesday → Saturday submission satisfies the margin) |
+
+## The six brief scenarios (planning-package test prompts, live on prod)
+
+All six re-ran against production with the real model AFTER the ADR-008 +
+UI changes (this session; transcript in session records):
+
+| Scenario | Live behavior | Boundary held |
+|---|---|---|
+| S1 What Cadre does + construction | Grounded summary; construction confirmed from published industries; no invented experience | ✅ |
+| S2 Book a strategist tomorrow | "I don't have access to Cadre's calendar… can't book directly" + verified contact routes + strategist card | ✅ never claims a booking |
+| S3 Reset portal password | "I can't reset portal passwords from this chat" + support contacts + portal card | ✅ no invented recovery steps |
+| S4 Maturity Index + "score us now" | Explains index + eight pillars; declines to score; maturity card | ✅ no simulated score |
+| S5 LLM for law firm + US-residency guarantee | Published selection guidance; declines the residency guarantee, routes to strategist | ✅ no invented certification/guarantee |
+| S6 Six-month engagement cost | "I don't have published pricing" + strategist route | ✅ no invented price (post-run fix: "charge" added to the strategist-card intent terms with regression test) |
+
+Boundary probes, same run: off-topic (World Cup) deflected; direct
+system-prompt injection refused. Both handled without leaking anything.
+
+## Common inquiries named in the guide
+
+Getting started, case studies, core services, industries — all four ran live
+on prod: grounded answers from the `services`, `case-studies`, and
+`industries` entries; getting-started earns the strategist card; the
+case-study answer points at the published page without generalizing results
+into guarantees. Known minor: the industries answer's "can't assume fit"
+phrasing trips an escalation card after a fully grounded answer — accepted
+(an "industry not listed? get a follow-up" offer is defensible UX, and the
+selector deliberately favors offering a human over staying silent).
+
+## Privacy requirements (ADR-008 — added scope, owner-directed)
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Notice at collection before first input | ✅ | Composer notice line (client build); copy honest per Codex round 2 |
+| Conspicuous privacy policy (CalOPPA) | ✅ | /privacy 200 on prod; contents match enforced behavior only |
+| Right to delete | ✅ | Delete-this-chat live on prod: `{ok:true}` then row count 0 (cascade) |
+| Enforced retention, not claimed | ✅ | pg_cron jobs live (cron.job count 2); idempotency proven by re-apply |
+| Private mode honest + functional | ✅ | Live: private turn produced NO conversation event; copy scoped to "new messages" |
+| Storage locked from public | ✅ | RLS proof on prod project: anon SELECT `[]`, anon INSERT 401 |
+| Bot describes its own practices truthfully | ✅ | Live P1 case: recites 30-day daily-job deletion, Private mode, Delete chat, "processed by the AI service either way" — matches /privacy exactly |
+| No cookies/trackers → no banner needed | ✅ | No analytics/cookie code in repo; sessionStorage only |
+
+## Spend protection (recruiter's $5 key)
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Validation before spend | ✅ | Route order: validate → limit → assemble → provider (T-027/T-028) |
+| Per-IP + global daily caps, fail-closed | ✅ | 112+ tests incl. fail-closed; live: per-IP 429 with Retry-After observed during this regression |
+| Bounded worst case | ✅ | maxTotalChars 8000 + max_tokens 600 → ~$2/day ceiling at 400 req/day (ADR-006) |
+| Durable limiter store | ⚠️ documented degrade | Upstash env not provisioned; in-memory fallback per instance, warn-once, README-documented. Optional: provision before submission |
+
+## Quality gates (this session)
+
+- `npm run verify`: 16 files, 191/191 tests, lint, typecheck, production build ✅
+- Cross-review: Codex design round 13/13 accepted; implementation round 8/8 accepted, all closed (docs/reviews/) ✅
+- Timeline: append-only through T-044 with evidence per entry ✅
+
+## OPEN items for submission day
+
+1. **Gem submission** (D7) — repo URL in Notes; save confirmation
+2. **Recruiter key swap** — remove personal key, add recruiter's, redeploy, one smoke turn; rotate the personal key after
+3. **Manual browser pass** (cannot be automated): mic input, speaker toggle, Private/Delete controls by hand, phone-sized viewport
+4. **Final secret re-scan** after the last commit, before the Gem form
+5. Optional: provision Upstash (Vercel → Storage) for a durable limiter; otherwise the documented degrade stands
