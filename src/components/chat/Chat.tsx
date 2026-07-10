@@ -220,15 +220,11 @@ export function Chat() {
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-3xl flex-col px-4">
-      <header className="flex items-start justify-between gap-3 border-b border-zinc-200 py-4 dark:border-zinc-800">
-        <div>
-          <h1 className="text-lg font-semibold">Cadre AI Support</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Ask about services, industries, the AI Maturity Index, or talking
-            with an AI strategist.
-          </p>
-        </div>
-        <div className="mt-0.5 flex shrink-0 items-center gap-2">
+      <header className="flex items-center justify-between gap-3 border-b border-zinc-200 py-4 dark:border-zinc-800">
+        <h1 className="truncate text-lg font-semibold">
+          Cadre AI Resource Agent
+        </h1>
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => setPrivateMode(!privateMode)}
@@ -263,7 +259,7 @@ export function Chat() {
               aria-label="Read replies aloud"
               aria-pressed={speechEnabled}
               title="Read replies aloud"
-              className={`cursor-pointer rounded-lg border px-2.5 py-2 ${
+              className={`cursor-pointer rounded-lg border px-2.5 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 ${
                 speechEnabled
                   ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
                   : "border-zinc-300 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
