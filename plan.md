@@ -117,8 +117,12 @@ Exit: pricing, booking, portal, and unknown questions all behave safely.
 - [x] Full text fallback verified with voice unavailable (`680f7ad`; SSR HTML
       carries no voice controls; unsupported browsers render the identical
       text experience. Real-mic Chrome smoke remains a manual step)
-- [ ] Responsive, keyboard, loading, empty, and error states finished
-      (final polish pass pending in Phase 5 live smoke)
+- [x] Responsive, keyboard, loading, empty, and error states finished
+      (T-043: single-line header + control row, stick-to-bottom scrolling with
+      accessible "↓ Latest" pill and reduced-motion support, post-submission
+      escalation-card suppression, focus-visible states everywhere; verified
+      in-browser at 375px-emulated and desktop widths plus a keyboard-only
+      pass; 189/189 tests)
 
 Exit: voice adds value without becoming a dependency.
 

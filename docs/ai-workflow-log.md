@@ -175,3 +175,25 @@ tests, lint, typecheck, production build.
   (escalation-card over-firing, KB self-description staleness under ADR-008,
   phantom confirmation-email implication) were folded into the same build
   scope.
+
+## Phase 6 — UI-polish workstream (2026-07-10, parallel to conv-client)
+
+- **Isolation pattern:** the polish workstream ran in its own git worktree off
+  committed main because the shared checkout held the conv-client builder's
+  uncommitted files — branch discipline without blocking either side. Rebase
+  onto the landed client work produced exactly one conflict (the header both
+  workstreams touched), resolved by design: the new single-line header's
+  control row was built with slots for the Private/Delete controls it had
+  never seen.
+- **Extract-then-test:** the one piece of scroll logic with edge cases
+  (stick-or-release decision, 40px threshold, rubber-band overscroll,
+  non-overflowing content) was extracted to a pure helper and unit-tested;
+  the DOM wiring around it stayed thin.
+- **Live verification over trust:** stick/no-yank behavior was measured in a
+  real browser (scrollTop instrumentation during real streaming), the pill
+  was driven keyboard-only, and the escalation-card suppression was proven in
+  both directions — flag set vs. cleared on equivalent prompts — rather than
+  accepting the ambiguous single negative result the first attempt produced.
+  The first suppression "test" was also caught selecting the wrong form's
+  submit button; the fix (scope the selector to the composer) is why the
+  positive control existed at all.
