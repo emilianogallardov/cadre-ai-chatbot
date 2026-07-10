@@ -51,7 +51,7 @@ export function Composer({
   }
 
   return (
-    <form onSubmit={submit} className="flex gap-2 border-t border-zinc-200 py-3 dark:border-zinc-800">
+    <form onSubmit={submit} className="flex gap-2 py-3">
       <label htmlFor="chat-input" className="sr-only">
         Your question
       </label>
@@ -65,7 +65,7 @@ export function Composer({
         maxLength={LIMITS.maxMessageChars}
         placeholder="Ask about Cadre AI…"
         autoComplete="off"
-        className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 dark:border-zinc-700 dark:focus:border-zinc-400"
+        className="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-transparent px-4 py-2 text-sm outline-none transition-shadow focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 dark:border-zinc-700 dark:focus:border-zinc-400"
       />
       {speech.supported && (
         <button

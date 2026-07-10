@@ -238,12 +238,15 @@ export function Chat() {
   }, [cancelSpeech]);
 
   return (
-    <div className="mx-auto flex h-dvh w-full max-w-3xl flex-col px-4">
-      <header className="flex items-center justify-between gap-3 border-b border-zinc-200 py-4 dark:border-zinc-800">
-        <h1 className="truncate text-lg font-semibold">
-          Cadre AI Resource Agent
-        </h1>
-        <div className="flex shrink-0 items-center gap-2">
+    // Full-bleed shell: the scroll area spans the viewport so the scrollbar
+    // sits at the window edge; text stays in a centered readable column.
+    <div className="flex h-dvh flex-col">
+      <header className="border-b border-zinc-200 dark:border-zinc-800">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-4">
+          <h1 className="truncate text-lg font-semibold tracking-tight">
+            Cadre AI Resource Agent
+          </h1>
+          <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => setPrivateMode(!privateMode)}
@@ -301,11 +304,14 @@ export function Chat() {
               </svg>
             </button>
           )}
+          </div>
         </div>
       </header>
 
       <Transcript items={items} streaming={status === "streaming"} />
 
+      <div className="border-t border-zinc-200 dark:border-zinc-800">
+        <div className="mx-auto w-full max-w-3xl px-4">
       {items.length === 0 && <SuggestedPrompts onPick={send} />}
 
       {errorText && (
@@ -356,6 +362,8 @@ export function Chat() {
       >
         {announce ?? ""}
       </p>
+        </div>
+      </div>
     </div>
   );
 }
