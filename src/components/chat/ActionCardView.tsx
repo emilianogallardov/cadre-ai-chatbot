@@ -17,7 +17,7 @@ export function ActionCardView({ card }: { card: ActionCard }) {
           href={card.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1.5 inline-block text-sm font-medium underline underline-offset-2"
+          className="mt-1.5 inline-block rounded-sm text-sm font-medium underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
         >
           Open {new URL(card.url).hostname}
         </a>

@@ -65,7 +65,7 @@ export function Composer({
         maxLength={LIMITS.maxMessageChars}
         placeholder="Ask about Cadre AI…"
         autoComplete="off"
-        className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:focus:border-zinc-400"
+        className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 dark:border-zinc-700 dark:focus:border-zinc-400"
       />
       {speech.supported && (
         <button
@@ -74,7 +74,7 @@ export function Composer({
           disabled={disabled}
           aria-label={speech.listening ? "Stop voice input" : "Start voice input"}
           aria-pressed={speech.listening}
-          className={`cursor-pointer rounded-lg border px-3 py-2 disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`cursor-pointer rounded-lg border px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 ${
             speech.listening
               ? "animate-pulse border-red-500 text-red-600 dark:border-red-500 dark:text-red-400"
               : "border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
@@ -101,7 +101,7 @@ export function Composer({
         <button
           type="button"
           onClick={onStop}
-          className="cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+          className="cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700"
         >
           Stop
         </button>
@@ -109,7 +109,7 @@ export function Composer({
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="cursor-pointer rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+          className="cursor-pointer rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
         >
           Send
         </button>
