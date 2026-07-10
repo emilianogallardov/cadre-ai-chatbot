@@ -98,10 +98,10 @@ type Phase =
   | { name: "confirmed"; referenceId: string | null };
 
 const cardFrame =
-  "mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900";
+  "relative mt-4 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/85 p-4 shadow-[0_14px_34px_-22px_rgba(0,0,0,0.6)] ring-1 ring-black/[0.025] sm:p-5 dark:border-zinc-800 dark:bg-zinc-900/85 dark:ring-white/[0.05]";
 
 const fieldClass =
-  "mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
+  "mt-1.5 w-full rounded-xl border border-zinc-300/80 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-[inset_0_1px_0_rgba(0,0,0,0.03)] outline-none transition-[border-color,box-shadow] focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 const labelClass =
   "block text-xs font-medium text-zinc-600 dark:text-zinc-400";
@@ -176,12 +176,35 @@ export function EscalationCard({ card }: { card: ActionCard }) {
   if (phase.name === "confirmed") {
     return (
       <div className={cardFrame}>
-        <p className="text-sm font-medium">Request received</p>
-        <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
-          {phase.referenceId
-            ? `Reference ${phase.referenceId}. A Cadre team member will follow up by email.`
-            : `A Cadre team member will follow up by email. You can also reach us directly at ${CONTACT_EMAIL}.`}
-        </p>
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden="true"
+            className="grid size-8 shrink-0 place-items-center rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-sm font-semibold tracking-tight">
+              Request received
+            </p>
+            <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
+              {phase.referenceId
+                ? `Reference ${phase.referenceId}. A Cadre team member will follow up by email.`
+                : `A Cadre team member will follow up by email. You can also reach us directly at ${CONTACT_EMAIL}.`}
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -190,7 +213,10 @@ export function EscalationCard({ card }: { card: ActionCard }) {
 
   return (
     <form className={cardFrame} onSubmit={handleSubmit} aria-busy={sending}>
-      <p className="text-sm font-medium">{card.title}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+        Talk to the Cadre team
+      </p>
+      <p className="mt-1 text-sm font-semibold tracking-tight">{card.title}</p>
       <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
         {card.body}
       </p>
@@ -205,35 +231,37 @@ export function EscalationCard({ card }: { card: ActionCard }) {
         </p>
       )}
 
-      <div className="mt-2 flex flex-col gap-2">
-        <div>
-          <label htmlFor={nameId} className={labelClass}>
-            Name
-          </label>
-          <input
-            id={nameId}
-            type="text"
-            value={name}
-            maxLength={MAX.name}
-            disabled={sending}
-            onChange={(e) => setName(e.target.value)}
-            className={fieldClass}
-          />
-        </div>
+      <div className="mt-3 flex flex-col gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor={nameId} className={labelClass}>
+              Name
+            </label>
+            <input
+              id={nameId}
+              type="text"
+              value={name}
+              maxLength={MAX.name}
+              disabled={sending}
+              onChange={(e) => setName(e.target.value)}
+              className={fieldClass}
+            />
+          </div>
 
-        <div>
-          <label htmlFor={emailId} className={labelClass}>
-            Email
-          </label>
-          <input
-            id={emailId}
-            type="email"
-            value={email}
-            maxLength={MAX.email}
-            disabled={sending}
-            onChange={(e) => setEmail(e.target.value)}
-            className={fieldClass}
-          />
+          <div>
+            <label htmlFor={emailId} className={labelClass}>
+              Email
+            </label>
+            <input
+              id={emailId}
+              type="email"
+              value={email}
+              maxLength={MAX.email}
+              disabled={sending}
+              onChange={(e) => setEmail(e.target.value)}
+              className={fieldClass}
+            />
+          </div>
         </div>
 
         <div>
@@ -258,7 +286,7 @@ export function EscalationCard({ card }: { card: ActionCard }) {
             checked={consent}
             disabled={sending}
             onChange={(e) => setConsent(e.target.checked)}
-            className="mt-0.5"
+            className="mt-0.5 size-4 accent-zinc-900 dark:accent-zinc-100"
           />
           <label
             htmlFor={consentId}
@@ -271,7 +299,7 @@ export function EscalationCard({ card }: { card: ActionCard }) {
         <button
           type="submit"
           disabled={sending || !ready}
-          className="mt-1 cursor-pointer self-start rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+          className="ui-lift mt-1 w-full cursor-pointer rounded-xl bg-zinc-900 px-3 py-2.5 text-sm font-medium text-white shadow-sm hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto dark:bg-zinc-100 dark:text-zinc-900"
         >
           {sending ? "Sending…" : "Request follow-up"}
         </button>

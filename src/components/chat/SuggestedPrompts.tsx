@@ -17,15 +17,23 @@ export function SuggestedPrompts({
   onPick: (text: string) => void;
 }) {
   return (
-    <div className="mb-3 flex flex-wrap gap-2">
+    // Horizontal rail on mobile (four long prompts would swallow a 375px
+    // viewport), two-column grid from sm up.
+    <div className="mb-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2">
       {PROMPTS.map((p) => (
         <button
           key={p}
           type="button"
           onClick={() => onPick(p)}
-          className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-900"
+          className="ui-lift group flex min-w-[15rem] cursor-pointer items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-3.5 py-3 text-left text-xs leading-5 text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-white hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 sm:min-w-0 dark:border-zinc-800 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
         >
-          {p}
+          <span>{p}</span>
+          <span
+            aria-hidden="true"
+            className="text-zinc-400 transition-transform group-hover:translate-x-0.5"
+          >
+            →
+          </span>
         </button>
       ))}
     </div>

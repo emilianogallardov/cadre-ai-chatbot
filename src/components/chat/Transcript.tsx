@@ -1,10 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import type { TranscriptItem } from "./Chat";
 import { ActionCardView } from "./ActionCardView";
 import { isNearBottom } from "./stickToBottom";
+import { isVerifiedHref } from "./verifiedLinks";
+
+// Model prose is untrusted: only verified Cadre origins become clickable
+// (see verifiedLinks.ts); every other anchor renders as its text.
+const markdownComponents: Components = {
+  a: ({ href, children }) =>
+    isVerifiedHref(href) ? (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline underline-offset-2"
+      >
+        {children}
+      </a>
+    ) : (
+      <>{children}</>
+    ),
+};
 
 export function Transcript({
   items,
@@ -84,49 +103,75 @@ export function Transcript({
       >
         <div className="mx-auto w-full max-w-3xl px-4 py-6">
           {items.length === 0 ? (
-            <div className="mt-16 text-center">
-              <p className="text-base font-medium text-zinc-600 dark:text-zinc-300">
-                How can we help?
+            <div className="mx-auto mt-12 max-w-md text-center sm:mt-20">
+              <div
+                aria-hidden="true"
+                className="mx-auto grid size-11 place-items-center rounded-2xl border border-zinc-200 bg-white/80 text-sm font-semibold shadow-[0_10px_30px_-16px_rgba(0,0,0,0.5)] ring-1 ring-black/[0.03] dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/[0.06]"
+              >
+                C
+              </div>
+              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                Cadre AI resource agent
               </p>
-              <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">
-                Start the conversation, or pick a question below.
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.025em] text-zinc-900 dark:text-zinc-100">
+                Make your next AI decision clearer.
+              </h2>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                Ask about Cadre&apos;s services, approach, industries, or AI
+                Maturity Index.
               </p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-5">
+            <ul className="flex flex-col gap-6">
               {items.map((item, i) => (
                 <li
                   key={i}
                   className={
                     item.message.role === "user"
-                      ? "msg-in ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-zinc-900 px-4 py-2.5 text-sm text-white shadow-sm dark:bg-zinc-100 dark:text-zinc-900"
-                      : "msg-in mr-auto w-full text-sm leading-relaxed"
+                      ? "msg-in ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-zinc-900 px-4 py-2.5 text-sm text-white shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)] ring-1 ring-black/[0.06] dark:bg-zinc-100 dark:text-zinc-900 dark:ring-white/10"
+                      : "msg-in mr-auto w-full"
                   }
                 >
-                  {item.message.content === "" &&
-                  item.message.role === "assistant" &&
-                  streaming &&
-                  i === items.length - 1 ? (
-                    <span
-                      className="typing-dots inline-flex items-center gap-1"
-                      aria-label="Assistant is typing"
-                    >
-                      <span aria-hidden="true" />
-                      <span aria-hidden="true" />
-                      <span aria-hidden="true" />
-                    </span>
-                  ) : item.message.role === "assistant" ? (
-                    <div className="assistant-md">
-                      <ReactMarkdown>{item.message.content}</ReactMarkdown>
+                  {item.message.role === "assistant" ? (
+                    <div className="flex max-w-[42rem] items-start gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg border border-zinc-200 bg-white/80 text-[10px] font-semibold shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                      >
+                        C
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                          Cadre AI
+                        </p>
+                        {item.message.content === "" &&
+                        streaming &&
+                        i === items.length - 1 ? (
+                          <span
+                            className="typing-dots inline-flex items-center gap-1 py-1"
+                            aria-label="Assistant is typing"
+                          >
+                            <span aria-hidden="true" />
+                            <span aria-hidden="true" />
+                            <span aria-hidden="true" />
+                          </span>
+                        ) : (
+                          <div className="assistant-md text-[15px] leading-7 text-zinc-800 dark:text-zinc-200">
+                            <ReactMarkdown components={markdownComponents}>
+                              {item.message.content}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                        {item.cards?.map((card, j) => (
+                          <ActionCardView key={j} card={card} />
+                        ))}
+                      </div>
                     </div>
                   ) : (
-                    <span className="whitespace-pre-wrap">
+                    <span className="whitespace-pre-wrap text-sm">
                       {item.message.content}
                     </span>
                   )}
-                  {item.cards?.map((card, j) => (
-                    <ActionCardView key={j} card={card} />
-                  ))}
                 </li>
               ))}
             </ul>

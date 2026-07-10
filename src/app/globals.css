@@ -25,6 +25,49 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Restrained tonal field behind the app: a barely-there radial highlight and
+   vertical shift so surfaces read as deliberately placed, not flat. */
+.chat-shell {
+  background:
+    radial-gradient(
+      70rem 28rem at 50% -12rem,
+      rgb(161 161 170 / 0.16),
+      transparent 68%
+    ),
+    linear-gradient(180deg, #fafafa 0%, #ffffff 42%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .chat-shell {
+    background:
+      radial-gradient(
+        70rem 28rem at 50% -12rem,
+        rgb(63 63 70 / 0.42),
+        transparent 68%
+      ),
+      linear-gradient(180deg, #18181b 0%, #0a0a0a 42%);
+  }
+}
+
+/* One shared interaction language: a one-pixel lift + press for controls. */
+.ui-lift {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .ui-lift:hover {
+    transform: translateY(-1px);
+  }
+
+  .ui-lift:active {
+    transform: translateY(0) scale(0.985);
+  }
+}
+
 /* Thin, unobtrusive transcript scrollbar (sits at the window edge). */
 .chat-scroll {
   scrollbar-width: thin;

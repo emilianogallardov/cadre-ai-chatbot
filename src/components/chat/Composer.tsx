@@ -6,11 +6,14 @@ import { joinTranscript, useSpeechInput } from "./useSpeechInput";
 
 export function Composer({
   disabled,
+  draft,
   streaming,
   onSend,
   onStop,
 }: {
   disabled: boolean;
+  /** A failed send restored by the parent; changes of `id` re-apply it. */
+  draft?: { value: string; id: number } | null;
   streaming: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
@@ -18,6 +21,15 @@ export function Composer({
   const [text, setText] = useState("");
   const [interim, setInterim] = useState("");
   const speech = useSpeechInput();
+
+  // When a send fails the parent hands the submitted text back so retrying is
+  // one click — the composer cleared it optimistically on submit. Applied as
+  // a render-time state adjustment (not an effect) per React guidance.
+  const [appliedDraftId, setAppliedDraftId] = useState<number | null>(null);
+  if (draft && draft.id !== appliedDraftId) {
+    setAppliedDraftId(draft.id);
+    setText(draft.value);
+  }
 
   // Interim speech is previewed live; the committed text plus any interim is
   // what the user reviews and sends. Voice never auto-submits.
@@ -51,7 +63,10 @@ export function Composer({
   }
 
   return (
-    <form onSubmit={submit} className="flex gap-2 py-3">
+    <form
+      onSubmit={submit}
+      className="mb-3 flex items-center gap-1 rounded-2xl border border-zinc-200/80 bg-white p-1.5 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.02] transition-[border-color,box-shadow] focus-within:border-zinc-400 focus-within:shadow-[0_14px_36px_-18px_rgba(0,0,0,0.5)] dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/[0.06] dark:focus-within:border-zinc-600"
+    >
       <label htmlFor="chat-input" className="sr-only">
         Your question
       </label>
@@ -65,7 +80,7 @@ export function Composer({
         maxLength={LIMITS.maxMessageChars}
         placeholder="Ask about Cadre AI…"
         autoComplete="off"
-        className="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-transparent px-4 py-2 text-sm outline-none transition-shadow focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 dark:border-zinc-700 dark:focus:border-zinc-400"
+        className="min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-inset"
       />
       {speech.supported && (
         <button
@@ -74,7 +89,7 @@ export function Composer({
           disabled={disabled}
           aria-label={speech.listening ? "Stop voice input" : "Start voice input"}
           aria-pressed={speech.listening}
-          className={`cursor-pointer rounded-lg border px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`grid h-10 w-10 cursor-pointer place-items-center rounded-xl border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 ${
             speech.listening
               ? "animate-pulse border-red-500 text-red-600 dark:border-red-500 dark:text-red-400"
               : "border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
@@ -101,7 +116,7 @@ export function Composer({
         <button
           type="button"
           onClick={onStop}
-          className="cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700"
+          className="ui-lift h-10 cursor-pointer rounded-xl border border-zinc-300 px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700"
         >
           Stop
         </button>
@@ -109,7 +124,7 @@ export function Composer({
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="cursor-pointer rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+          className="ui-lift h-10 cursor-pointer rounded-xl bg-zinc-900 px-4 text-sm font-medium text-white shadow-sm hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
         >
           Send
         </button>

@@ -40,6 +40,11 @@ export function Chat() {
   const [items, setItems] = useState<TranscriptItem[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorText, setErrorText] = useState<string | null>(null);
+  // Failed sends restore the submitted text into the composer; the id makes
+  // the same text restorable twice in a row.
+  const [draft, setDraft] = useState<{ value: string; id: number } | null>(
+    null,
+  );
   const abortRef = useRef<AbortController | null>(null);
   const {
     supported: speechSupported,
@@ -115,6 +120,9 @@ export function Chat() {
       // A new user message supersedes any reply still being read aloud.
       cancelSpeech();
       let assistantText = "";
+      // A stream that ends without the terminal `done` event (and without an
+      // abort) is a dropped connection, not a completed turn.
+      let sawDone = false;
 
       const userItem: TranscriptItem = {
         message: { role: "user", content: trimmed },
@@ -164,6 +172,14 @@ export function Chat() {
             handleEvent(JSON.parse(line) as StreamEvent);
           }
         }
+        if (!sawDone) {
+          throw Object.assign(
+            new Error(
+              "The connection dropped before the reply finished. Please try again.",
+            ),
+            { name: "StreamError" },
+          );
+        }
         // Turn completed: the next send is a new logical turn, not a retry.
         pendingTurnRef.current = null;
         setStatus("idle");
@@ -172,10 +188,20 @@ export function Chat() {
           setStatus("idle");
         } else {
           setStatus("error");
+          // StreamError carries the server's typed, user-safe message (rate
+          // limit with wait time, provider failure) — show it rather than a
+          // generic banner. Anything else gets the generic copy.
           setErrorText(
-            "Something went wrong reaching the assistant. Your message is still in the box — try again, or contact Cadre directly at hello@gocadre.ai.",
+            (err as Error).name === "StreamError"
+              ? (err as Error).message
+              : "Something went wrong reaching the assistant. Your message " +
+                  "is back in the box — try again, or contact Cadre directly " +
+                  "at hello@gocadre.ai.",
           );
-          // Drop the empty assistant placeholder so retry starts clean.
+          // Put the failed message back in the composer so retrying is one
+          // click, and drop the empty assistant placeholder so retry starts
+          // clean.
+          setDraft({ value: trimmed, id: Date.now() });
           setItems((prev) =>
             prev.filter(
               (it, idx) =>
@@ -222,6 +248,7 @@ export function Chat() {
           // turns and the delete control target the same server-side record.
           writeConversationToken(event.token);
         } else if (event.type === "done") {
+          sawDone = true;
           // Read the completed reply once, only if output is enabled.
           speak(assistantText);
         } else if (event.type === "error") {
@@ -240,12 +267,25 @@ export function Chat() {
   return (
     // Full-bleed shell: the scroll area spans the viewport so the scrollbar
     // sits at the window edge; text stays in a centered readable column.
-    <div className="flex h-dvh flex-col">
-      <header className="border-b border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-4">
-          <h1 className="truncate text-lg font-semibold tracking-tight">
-            Cadre AI Resource Agent
-          </h1>
+    <div className="chat-shell flex h-dvh flex-col">
+      <header className="border-b border-zinc-200/70 bg-white/60 backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-950/60">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="grid size-8 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-xs font-semibold shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              C
+            </span>
+            <div className="min-w-0 max-[430px]:sr-only">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Cadre AI
+              </p>
+              <h1 className="truncate text-sm font-semibold tracking-tight">
+                Resource Agent
+              </h1>
+            </div>
+          </div>
           <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
@@ -253,7 +293,7 @@ export function Chat() {
             aria-label="Private mode"
             aria-pressed={privateMode}
             title="Private mode — Cadre won't save this chat"
-            className={`cursor-pointer rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
+            className={`ui-lift h-9 cursor-pointer rounded-xl border bg-white/60 px-2.5 text-xs font-medium shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 ${
               privateMode
                 ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
                 : "border-zinc-300 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
@@ -266,11 +306,33 @@ export function Chat() {
             <button
               type="button"
               onClick={deleteConversation}
-              disabled={deleting}
-              title="Delete this chat from Cadre's records"
-              className="cursor-pointer rounded-lg border border-zinc-300 px-2.5 py-1.5 text-xs font-medium text-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400"
+              disabled={deleting || status === "streaming"}
+              aria-label="Delete chat"
+              title={
+                status === "streaming"
+                  ? "Available when the current reply finishes"
+                  : "Delete this chat from Cadre's records"
+              }
+              className="ui-lift h-9 cursor-pointer rounded-xl border border-zinc-300 bg-white/60 px-2.5 text-xs font-medium text-zinc-500 shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:bg-zinc-900"
             >
-              {deleting ? "Deleting…" : "Delete chat"}
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="sm:hidden"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              <span className="hidden sm:inline">
+                {deleting ? "Deleting…" : "Delete chat"}
+              </span>
             </button>
           )}
 
@@ -281,7 +343,7 @@ export function Chat() {
               aria-label="Read replies aloud"
               aria-pressed={speechEnabled}
               title="Read replies aloud"
-              className={`cursor-pointer rounded-lg border px-2.5 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 ${
+              className={`ui-lift grid h-9 w-9 cursor-pointer place-items-center rounded-xl border bg-white/60 shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 ${
                 speechEnabled
                   ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
                   : "border-zinc-300 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
@@ -310,8 +372,8 @@ export function Chat() {
 
       <Transcript items={items} streaming={status === "streaming"} />
 
-      <div className="border-t border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto w-full max-w-3xl px-4">
+      <div className="border-t border-zinc-200/70 bg-white/80 shadow-[0_-20px_60px_-40px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-950/80">
+        <div className="mx-auto w-full max-w-3xl px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3">
       {items.length === 0 && <SuggestedPrompts onPick={send} />}
 
       {errorText && (
@@ -325,6 +387,7 @@ export function Chat() {
 
       <Composer
         disabled={status === "streaming"}
+        draft={draft}
         onSend={send}
         onStop={stop}
         streaming={status === "streaming"}
