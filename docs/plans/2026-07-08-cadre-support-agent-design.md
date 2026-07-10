@@ -1,6 +1,11 @@
 # Cadre Support Concierge Design
 
-- Status: Draft for implementation handoff
+- Status: Historical — implementation handoff document, since executed.
+  Where this draft says transcripts are session-only or excludes persistent
+  history, it predates
+  [ADR-008](../decisions/ADR-008-conversation-storage-with-private-mode.md)
+  (conversation storage with notice, private mode, delete, enforced
+  retention). `plan.md` and the ADRs are the current sources of truth.
 - Date: 2026-07-08
 - Product boundary: Public support concierge, not a client portal
 

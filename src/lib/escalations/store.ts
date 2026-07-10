@@ -119,9 +119,29 @@ export function getEscalationStore(): EscalationStore {
   if (cachedStore) return cachedStore;
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
-  cachedStore =
-    url && key ? new SupabaseRestStore(url, key) : new MemoryStore();
+  if (url && key) {
+    cachedStore = new SupabaseRestStore(url, key);
+  } else if (process.env.VERCEL_ENV === "production") {
+    // A production deploy without Supabase credentials must not hand out
+    // fake `local-*` reference IDs for leads that evaporate with the
+    // instance. Failing here routes the visitor to the verified
+    // direct-contact fallback (ADR-005) instead.
+    cachedStore = new FailingStore();
+  } else {
+    cachedStore = new MemoryStore();
+  }
   return cachedStore;
+}
+
+/** Production stand-in when storage is unconfigured: every insert fails so
+ * the route serves the direct-contact fallback instead of fake success. */
+class FailingStore implements EscalationStore {
+  async insert(): Promise<{ referenceId: string }> {
+    throw new StoreError(
+      503,
+      "Escalation storage is not configured in production.",
+    );
+  }
 }
 
 /** Clears the cached store (tests only). */

@@ -138,6 +138,12 @@ export async function* streamChatCompletion(
  * Returns null for blank lines, `:` comment keep-alives
  * (": OPENROUTER PROCESSING"), the `[DONE]` sentinel, non-`data:` events,
  * malformed JSON, and any payload without non-empty `choices[0].delta.content`.
+ *
+ * Throws GatewayError when the payload carries a provider failure: OpenRouter
+ * reports errors that occur after streaming begins as a top-level `error`
+ * object (or `finish_reason: "error"`) inside a 200 stream, not as an HTTP
+ * status. Swallowing those would let a truncated reply look like a successful
+ * turn — and get action cards and storage it should not.
  */
 export function parseSseLine(line: string): string | null {
   const trimmed = line.trim();
@@ -154,11 +160,27 @@ export function parseSseLine(line: string): string | null {
     return null;
   }
 
-  const content = (
-    payload as {
-      choices?: Array<{ delta?: { content?: unknown } }>;
-    }
-  )?.choices?.[0]?.delta?.content;
+  const parsed = payload as {
+    error?: { message?: unknown; code?: unknown };
+    choices?: Array<{ delta?: { content?: unknown }; finish_reason?: unknown }>;
+  };
+
+  if (parsed?.error) {
+    const message =
+      typeof parsed.error.message === "string" && parsed.error.message.length > 0
+        ? parsed.error.message.slice(0, 200)
+        : "provider reported a mid-stream error";
+    const code =
+      typeof parsed.error.code === "number" ? parsed.error.code : undefined;
+    throw new GatewayError(`OpenRouter mid-stream error: ${message}`, code);
+  }
+  if (parsed?.choices?.[0]?.finish_reason === "error") {
+    throw new GatewayError(
+      "OpenRouter mid-stream error: the model stopped with an error.",
+    );
+  }
+
+  const content = parsed?.choices?.[0]?.delta?.content;
 
   return typeof content === "string" && content.length > 0 ? content : null;
 }

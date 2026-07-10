@@ -15,11 +15,16 @@ import {
   verifyConversationToken,
 } from "@/lib/conversations/token";
 import { storeTurn } from "@/lib/conversations/store";
+import { BodyTooLargeError, readJsonBounded } from "@/lib/http/body";
 
 export const runtime = "nodejs";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Byte cap on the request body, enforced on the stream (~8KB of message
+ * text plus token/turnId/JSON overhead fits far inside this). */
+const MAX_REQUEST_BYTES = 64 * 1024;
 
 /**
  * Storage decision for one request (ADR-008). Resolved BEFORE streaming so the
@@ -92,7 +97,9 @@ export async function POST(req: NextRequest) {
   let messages: ChatMessage[];
   let storagePlan: ReturnType<typeof planStorage>;
   try {
-    const body = (await req.json()) as {
+    // Bounded on actual bytes, not the Content-Length claim: a valid request
+    // is ~8KB of message text plus token/turnId overhead, so 64KB is generous.
+    const body = (await readJsonBounded(req, MAX_REQUEST_BYTES)) as {
       messages?: unknown;
       conversationToken?: unknown;
       private?: unknown;
@@ -101,6 +108,13 @@ export async function POST(req: NextRequest) {
     messages = validateMessages(body.messages);
     storagePlan = planStorage(body);
   } catch (err) {
+    if (err instanceof BodyTooLargeError) {
+      return errorResponse(
+        "invalid_request",
+        "Request body is too large.",
+        413,
+      );
+    }
     return errorResponse(
       "invalid_request",
       err instanceof ValidationError
@@ -126,9 +140,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return isGatewayConfigured()
-    ? streamModelResponse(messages, req.signal, storagePlan)
-    : streamMockResponse(messages, storagePlan);
+  if (!isGatewayConfigured()) {
+    // The keyless mock exists for local dev and preview deploys. In
+    // production a missing key is a broken deployment, and pretending to
+    // answer would hide it — fail loudly with the typed error instead.
+    if (process.env.VERCEL_ENV === "production") {
+      const contacts = knowledgeBase.verified_contacts;
+      return errorResponse(
+        "provider_error",
+        "The assistant is temporarily unavailable. Please reach Cadre " +
+          `directly at ${contacts.email} or ${contacts.phone}.`,
+        503,
+      );
+    }
+    return streamMockResponse(messages, storagePlan);
+  }
+  return streamModelResponse(messages, req.signal, storagePlan);
 }
 
 /** Stream the real model response as NDJSON events. */

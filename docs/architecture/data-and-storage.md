@@ -1,5 +1,12 @@
 # Data and Storage Plan
 
+> **Historical planning artifact (2026-07-08).** Rows describing conversation
+> turns as session-only predate ADR-008, which added default-on conversation
+> storage with notice at collection, private mode, delete-this-chat, and
+> pg_cron-enforced 30-day retention. Current sources of truth:
+> [ADR-008](../decisions/ADR-008-conversation-storage-with-private-mode.md),
+> `plan.md` Phase 6, and the live `/privacy` page.
+
 ## Data location by category
 
 | Data | Location | Lifetime | Contains PII? | Notes |

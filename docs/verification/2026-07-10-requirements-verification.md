@@ -69,9 +69,12 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 16 files, 191/191 tests, lint, typecheck, production build ✅
-- Cross-review: Codex design round 13/13 accepted; implementation round 8/8 accepted, all closed (docs/reviews/) ✅
-- Timeline: append-only through T-044 with evidence per entry ✅
+- `npm run verify`: 18 files, 205/205 tests, lint, typecheck, production build ✅
+- Cross-review: Codex design round 13/13 accepted; implementation round 8/8
+  accepted, all closed; round 3 full-repo review (GPT-5.6 Sol) 14 findings —
+  9 fixed, 2 already user-gated, 3 deferred with documented reasoning
+  (docs/reviews/2026-07-10-codex-round3-full-repo-review.md) ✅
+- Timeline: append-only through T-048 with evidence per entry ✅
 
 ## Independent rubric audit (212-item planning checklist)
 
@@ -104,7 +107,10 @@ product sections after the same-hour fixes:
 2. **Recruiter key swap** — remove personal key, add recruiter's, redeploy, one smoke turn; rotate the personal key after
 3. **Manual browser pass** (cannot be automated): mic input, speaker toggle, Private/Delete controls by hand, phone-sized viewport
 4. **Final secret re-scan** after the last commit, before the Gem form
-5. Optional: provision Upstash (Vercel → Storage) for a durable limiter; otherwise the documented degrade stands
+5. **Provision Upstash (Vercel → Storage)** — elevated from optional by the
+   round-3 review: without it the "global" daily cap is per-instance memory,
+   not a global spend guarantee. The provider-side credit limit on the
+   metered key remains the hard backstop either way
 
 ## Next work package (Tuesday presentation, not submission-blocking)
 

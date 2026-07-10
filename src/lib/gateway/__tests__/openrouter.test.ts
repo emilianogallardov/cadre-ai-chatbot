@@ -57,6 +57,29 @@ describe("parseSseLine", () => {
   it("returns null for malformed JSON without throwing", () => {
     expect(parseSseLine("data: {not valid json}")).toBeNull();
   });
+
+  it("throws GatewayError on a top-level mid-stream error payload", () => {
+    expect(() =>
+      parseSseLine(
+        'data: {"error":{"message":"Provider overloaded","code":502}}',
+      ),
+    ).toThrowError(GatewayError);
+    expect(() =>
+      parseSseLine('data: {"error":{}}'),
+    ).toThrowError(GatewayError);
+  });
+
+  it("throws GatewayError on finish_reason error", () => {
+    expect(() =>
+      parseSseLine('data: {"choices":[{"delta":{},"finish_reason":"error"}]}'),
+    ).toThrowError(GatewayError);
+  });
+
+  it("does not treat normal finish reasons as errors", () => {
+    expect(
+      parseSseLine('data: {"choices":[{"delta":{},"finish_reason":"stop"}]}'),
+    ).toBeNull();
+  });
 });
 
 describe("isGatewayConfigured", () => {
@@ -123,6 +146,43 @@ describe("streamChatCompletion", () => {
       }),
     );
     expect(result).toEqual(["a", "b"]);
+  });
+
+  it("throws GatewayError on a mid-stream error after partial output", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      sseResponse([
+        delta("partial "),
+        'data: {"error":{"message":"provider fell over","code":502}}\n\n',
+        "data: [DONE]\n\n",
+      ]),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const gen = streamChatCompletion({
+      system: "s",
+      messages: [{ role: "user", content: "hi" }],
+    });
+    await expect(gen.next()).resolves.toEqual({
+      value: "partial ",
+      done: false,
+    });
+    await expect(gen.next()).rejects.toThrowError(GatewayError);
+  });
+
+  it("throws GatewayError on an error frame before any output", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      sseResponse(['data: {"error":{"message":"no capacity"}}\n\n']),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      collect(
+        streamChatCompletion({
+          system: "s",
+          messages: [{ role: "user", content: "hi" }],
+        }),
+      ),
+    ).rejects.toThrowError(GatewayError);
   });
 
   it("stops at [DONE] and drops anything after it", async () => {

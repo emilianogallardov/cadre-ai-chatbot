@@ -58,6 +58,11 @@ changed two details of this decision:
    worst case of ~15k input tokens per request — at 400 requests/day that
    could exceed the budget. `LIMITS.maxTotalChars` (8000) now bounds the whole
    payload, making the worst-case day roughly $2 at Haiku-class pricing.
+   With the Sonnet-class fallback (ADR-007) taking every worst-case request —
+   the true worst case, at roughly 4× Haiku pricing — a full day still lands
+   around $5–6, and the key's own prepaid credit limit is the hard backstop:
+   OpenRouter stops serving when the metered credit is exhausted, so no
+   configuration error here can overspend the key.
 
 The same review round added structural transcript validation (strict
 user/assistant alternation ending in a user turn), closing the forged

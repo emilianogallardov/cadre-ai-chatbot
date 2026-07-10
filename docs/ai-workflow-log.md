@@ -215,3 +215,24 @@ tests, lint, typecheck, production build.
   gate stayed green) and their verifiedLinks sanitizer defined but not yet
   wired into the markdown render (wired in, and the new file was included in
   the commit so main stayed self-consistent).
+
+## Round-3 full-repo review with GPT-5.6 Sol (2026-07-10)
+
+- **Frontier-model refresh as a review event:** GPT-5.6 Sol went GA the day
+  before submission; pointing the strongest available reviewer at the whole
+  repo (prior Codex rounds were scoped to ADR-008) cost one prompt and found
+  what two earlier reviews missed — the SSE parser swallowed OpenRouter's
+  mid-stream error payloads, letting a provider failure masquerade as a
+  successful answer complete with action cards and storage.
+- **Adjudicate, don't obey:** all 14 findings were re-verified against the
+  code before acting. Two of Sol's "fresh gate failed" signals were artifacts
+  of its own read-only sandbox (stale `.next` Finder duplicates, no network)
+  and were discounted with reasons; three test-rigor findings were deferred
+  with documented reasoning rather than churning the benchmark the day before
+  submission. 9 of 14 fixed within the hour, 13 new regression tests.
+- **Two agents, one file, no worktree:** the premium-UI session and this
+  review pass edited Chat.tsx/Composer.tsx concurrently. The seam held by
+  sequencing (server-side fixes while the UI session owned the components,
+  then reconciling), and the UI session folded the orchestrator's logic edits
+  into its commit — verified by grepping the committed blob before building
+  on top of it.

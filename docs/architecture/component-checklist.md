@@ -1,5 +1,10 @@
 # Agent Component Checklist
 
+> **Historical planning artifact (2026-07-08).** Statuses reflect the
+> pre-build planning package; the components below have since shipped. For
+> execution reality see `plan.md` (phases with commit evidence) and
+> `ACTIVITY-TIMELINE.md`.
+
 Status meanings:
 
 - **Ready**: artifact or source data exists in this package.

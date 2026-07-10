@@ -6,6 +6,7 @@ import { checkEscalationLimit } from "@/lib/limits/ratelimit";
 import { knowledgeBase } from "@/lib/prompt/knowledge";
 import { verifyConversationToken } from "@/lib/conversations/token";
 import { linkConversation } from "@/lib/conversations/store";
+import { BodyTooLargeError, readJsonBounded } from "@/lib/http/body";
 
 export const runtime = "nodejs";
 
@@ -31,8 +32,7 @@ const MAX_BODY_BYTES = 16_384;
  */
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get("content-type") ?? "";
-  const contentLength = Number(req.headers.get("content-length") ?? "0");
-  if (!contentType.includes("application/json") || contentLength > MAX_BODY_BYTES) {
+  if (!contentType.includes("application/json")) {
     return jsonResult(
       {
         ok: false,
@@ -46,11 +46,19 @@ export async function POST(req: NextRequest) {
   let input;
   let conversationToken: unknown;
   try {
-    const body = await req.json();
+    // Size is enforced on the actual bytes read, not the Content-Length
+    // header, which is a client claim (absent entirely on chunked encoding).
+    const body = await readJsonBounded(req, MAX_BODY_BYTES);
     conversationToken = (body as { conversationToken?: unknown })
       ?.conversationToken;
     input = validateEscalation(body);
   } catch (err) {
+    if (err instanceof BodyTooLargeError) {
+      return jsonResult(
+        { ok: false, code: "invalid", message: "Request body is too large." },
+        413,
+      );
+    }
     return jsonResult(
       {
         ok: false,
@@ -66,8 +74,8 @@ export async function POST(req: NextRequest) {
 
   // The cap runs after validation so it is consumed only by well-formed
   // submissions — three typos must not lock a legitimate user out for a day.
-  // (Malformed spam is bounded by the content-length gate above; parsing a
-  // <=16KB body is trivial.)
+  // (Malformed spam is bounded by the byte cap above; parsing a <=16KB body
+  // is trivial.)
   const escalation = await checkEscalationLimit(clientIp(req));
   if (!escalation.ok) {
     const contacts = knowledgeBase.verified_contacts;

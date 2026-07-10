@@ -33,8 +33,8 @@ Browser ── NDJSON stream ── POST /api/chat
 ```
 
 - **Curated knowledge, not RAG** — the corpus that answers the required
-  scenarios is 12 sourced entries (~3KB). It fits in the prompt with room to
-  spare; retrieval would add failure modes to fetch the same 3KB every time
+  scenarios is 14 sourced entries (~3.5KB). It fits in the prompt with room to
+  spare; retrieval would add failure modes to fetch the same corpus every time
   ([ADR-001](docs/decisions/ADR-001-curated-knowledge-before-rag.md)). The
   model receives only this layer — it cannot leak facts it was never given.
 - **Every gate runs before money is spent** — validation, then the limiter,
@@ -94,7 +94,7 @@ npm run benchmark   # ADR-007 harness (spends the key in .env.local deliberately
 ## Layout
 
 ```
-data/curated/knowledge-base.json   # the model's entire world: 12 sourced entries + policy
+data/curated/knowledge-base.json   # the model's entire world: 14 sourced entries + policy
 src/lib/prompt/                    # prompt assembly (pure; policy + KB + bounded turns)
 src/lib/gateway/                   # OpenRouter client (all provider detail lives here)
 src/lib/limits/                    # per-IP + global + escalation limits, fail-closed
