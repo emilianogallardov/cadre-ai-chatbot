@@ -65,7 +65,7 @@ claim that the chatbot application has been scaffolded.
 
 ## Next-entry rule
 
-The next material action receives ID `T-043`. Before any agent says a task is
+The next material action receives ID `T-044`. Before any agent says a task is
 complete, it must append an entry containing:
 
 1. What changed
