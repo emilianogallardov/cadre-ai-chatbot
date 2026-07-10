@@ -33,3 +33,26 @@ Server-only Supabase access with RLS-and-zero-policies; consent-gated
 escalation storage; validation + rate limiting in front of every write;
 per-tab sessionStorage as the conversation boundary; storing only the final
 user/assistant turn per request rather than re-writing history.
+
+---
+
+# Round 2: implementation review (post-build, same day)
+
+- Scope: full ADR-008 implementation diff (26 files), /privacy page, KB entry
+- Verdict returned: **fix-then-ship** — 8 findings, all 8 accepted (one
+  partially, with a documented residual)
+
+| # | Sev | Finding | Resolution |
+|---|-----|---------|------------|
+| 1 | High | Delete can race the post-response store; cards emitted before the token could leave a first-turn escalation unlinked | **Accepted (partial).** `conversation` event now precedes action cards on both paths; Delete is disabled while a stream is in flight (the human-reachable race). Residual: a network-level delete beating an in-flight `after()` write by milliseconds is accepted for this exercise — closing it needs a tombstone table, named as the production step |
+| 2 | High | Private mode silently lost when sessionStorage is blocked (catch blocks referenced a fallback that didn't exist) | **Accepted.** In-memory mirror is now the read source of truth; sessionStorage is best-effort persistence; tests cover throwing storage |
+| 3 | Med | Mid-chat Private toggle copy overclaimed ("isn't saving this chat" while earlier turns stay saved) | **Accepted.** Copy now says "new messages aren't being saved"; privacy page spells out that pre-toggle turns stay until Delete this chat |
+| 4 | Med | Escalation linking bumped `last_message_at`, silently extending transcript retention | **Accepted.** `linkConversation` switched to ignore-duplicates (row created if missing, untouched if present); test asserts the header |
+| 5 | Med | Per-send turnId regeneration defeated dedup on user retry | **Accepted.** The pending logical turn keeps its turnId across retries of the same text; cleared on successful completion |
+| 6 | Low | "Deleted after 30 days" stricter than a daily-job reality (~31 days worst case) | **Accepted.** Copy: "a daily job deletes records once they are older than 30 days" (privacy page + KB) |
+| 7 | Low | cron.schedule not idempotent on re-apply | **Accepted.** Unschedule-first DO block; proven by re-applying the migration to the live project — job count stayed at exactly 2 |
+| 8 | Low | KB said the assistant "remembers earlier messages in this chat" while the prompt window is 12 turns | **Accepted.** "uses recent messages in the current chat" |
+
+Design findings #4, #6, #9, #10, #12, #13 confirmed met by round 2; the
+half-met ones (#2, #3, #5, #7, #11) are closed by the fixes above. No
+server-secret or PII leak found in either round.

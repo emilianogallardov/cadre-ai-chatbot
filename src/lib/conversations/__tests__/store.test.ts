@@ -186,7 +186,7 @@ describe("storeTurn (unconfigured)", () => {
 });
 
 describe("linkConversation", () => {
-  it("upserts the conversation and returns true on 2xx", async () => {
+  it("ensures the row exists without touching an existing one (Codex #4)", async () => {
     stubStorageEnv();
     const fetchMock = vi.fn(async () => ok());
     vi.stubGlobal("fetch", fetchMock);
@@ -199,9 +199,12 @@ describe("linkConversation", () => {
       RequestInit,
     ];
     expect(url).toBe(`${SUPABASE.url}/rest/v1/conversations`);
+    // ignore-duplicates (ON CONFLICT DO NOTHING), NOT merge: linking a lead
+    // days later must not bump last_message_at and extend retention.
     expect((init.headers as Record<string, string>).Prefer).toBe(
-      "resolution=merge-duplicates",
+      "resolution=ignore-duplicates",
     );
+    expect(JSON.parse(init.body as string)).toEqual({ id: CONVERSATION_ID });
   });
 
   it("returns false on a non-2xx response without throwing", async () => {

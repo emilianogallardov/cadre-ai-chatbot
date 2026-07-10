@@ -1,12 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChatMessage } from "@/lib/chat/types";
 import {
   buildChatRequestBody,
+  clearConversationToken,
   deleteSucceeded,
   linkedConversationToken,
   NOTICE_DEFAULT,
   NOTICE_PRIVATE,
   noticeText,
+  readConversationToken,
+  readPrivateMode,
+  resetSessionStateForTests,
+  writeConversationToken,
+  writePrivateMode,
 } from "../conversationStorage";
 
 const messages: ChatMessage[] = [{ role: "user", content: "hi" }];
@@ -91,4 +97,45 @@ describe("deleteSucceeded", () => {
       expect(deleteSucceeded(body)).toBe(false);
     },
   );
+});
+
+describe("session state falls back to the in-memory mirror (Codex #2)", () => {
+  // A Private toggle must never be silently dropped because sessionStorage is
+  // blocked (private browsing, quota): reads come from the module mirror, and
+  // persistence is best-effort only.
+  const throwingStorage = new Proxy(
+    {},
+    {
+      get() {
+        return () => {
+          throw new Error("storage blocked");
+        };
+      },
+    },
+  );
+
+  beforeEach(() => {
+    resetSessionStateForTests();
+    vi.stubGlobal("window", {});
+    vi.stubGlobal("sessionStorage", throwingStorage);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetSessionStateForTests();
+  });
+
+  it("holds private mode ON when storage writes throw", () => {
+    writePrivateMode(true);
+    expect(readPrivateMode()).toBe(true);
+    writePrivateMode(false);
+    expect(readPrivateMode()).toBe(false);
+  });
+
+  it("holds and clears the conversation token when storage throws", () => {
+    writeConversationToken("uuid.sig");
+    expect(readConversationToken()).toBe("uuid.sig");
+    clearConversationToken();
+    expect(readConversationToken()).toBeNull();
+  });
 });

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cadre AI Support",
+  title: "Cadre AI Resource Agent",
   description:
     "Ask about Cadre AI's services, industries, the AI Maturity Index, or how to talk with an AI strategist.",
 };

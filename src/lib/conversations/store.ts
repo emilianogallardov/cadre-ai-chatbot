@@ -116,9 +116,12 @@ export async function storeTurn(input: {
 }
 
 /**
- * Idempotent conversation upsert used by the escalation route before it inserts
- * a linked lead, eliminating the FK race with the post-stream turn write
- * (ADR-008 #5). Returns false (never throws) on any failure.
+ * Ensure the conversation row exists before the escalation route inserts a
+ * linked lead, eliminating the FK race with the post-stream turn write
+ * (ADR-008 #5). Uses ignore-duplicates, NOT the merge upsert: linking a lead
+ * days later must not bump last_message_at and silently extend the transcript
+ * past the stated 30-day retention (Codex #4). Returns false (never throws) on
+ * any failure.
  */
 export async function linkConversation(
   conversationId: string,
@@ -126,7 +129,14 @@ export async function linkConversation(
   const cfg = config();
   if (!cfg) return false;
   try {
-    const response = await upsertConversation(cfg, conversationId);
+    const response = await fetch(`${cfg.url}/rest/v1/conversations`, {
+      method: "POST",
+      redirect: "error",
+      // ignore-duplicates maps to ON CONFLICT DO NOTHING: the row is created
+      // if missing and left completely untouched if present.
+      headers: headers(cfg.key, "resolution=ignore-duplicates"),
+      body: JSON.stringify({ id: conversationId }),
+    });
     if (!response.ok) {
       console.error(
         `[conversations] linkConversation failed (HTTP ${response.status}).`,

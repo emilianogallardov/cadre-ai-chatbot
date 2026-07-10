@@ -71,8 +71,9 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-semibold">How long we keep it</h2>
           <p className="mt-2">
-            Conversations and follow-up requests are deleted automatically
-            after <strong>30 days</strong> by a scheduled job in our database.
+            A daily scheduled job in our database deletes conversations and
+            follow-up requests once they are older than{" "}
+            <strong>30 days</strong>.
           </p>
         </section>
 
@@ -81,9 +82,11 @@ export default function PrivacyPage() {
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
               <strong>Private mode</strong> (toggle in the chat header): stops
-              Cadre from saving your chat transcript. Your messages are still
-              processed by our AI service provider to generate replies &mdash;
-              that is how the assistant works &mdash; but Cadre keeps no copy.
+              new messages from being saved. Messages sent before you turned it
+              on stay saved until you use Delete this chat. Your messages are
+              still processed by our AI service provider to generate replies
+              &mdash; that is how the assistant works &mdash; but Cadre keeps
+              no copy of what you send while it is on.
             </li>
             <li>
               <strong>Delete this chat</strong>: while your tab is open, one

@@ -72,7 +72,9 @@ export function Chat() {
 
   const deleteConversation = useCallback(async () => {
     const token = readConversationToken();
-    if (!token || deleting) return;
+    // Not during streaming: the in-flight turn's post-response store would
+    // re-create the conversation right after the delete (Codex #1).
+    if (!token || deleting || status === "streaming") return;
     setDeleting(true);
     setAnnounce(null);
     try {
@@ -98,7 +100,12 @@ export function Chat() {
     } finally {
       setDeleting(false);
     }
-  }, [deleting]);
+  }, [deleting, status]);
+
+  // Stable dedup key per logical user turn (Codex #5): a retry of the same
+  // text reuses the turnId so a turn the server already stored (but the client
+  // failed to read back) dedups under the unique index instead of duplicating.
+  const pendingTurnRef = useRef<{ text: string; turnId: string } | null>(null);
 
   const send = useCallback(
     async (text: string) => {
@@ -120,7 +127,11 @@ export function Chat() {
 
       const controller = new AbortController();
       abortRef.current = controller;
-      const turnId = crypto.randomUUID();
+      const turnId =
+        pendingTurnRef.current?.text === trimmed
+          ? pendingTurnRef.current.turnId
+          : crypto.randomUUID();
+      pendingTurnRef.current = { text: trimmed, turnId };
 
       try {
         const res = await fetch("/api/chat", {
@@ -153,6 +164,8 @@ export function Chat() {
             handleEvent(JSON.parse(line) as StreamEvent);
           }
         }
+        // Turn completed: the next send is a new logical turn, not a retry.
+        pendingTurnRef.current = null;
         setStatus("idle");
       } catch (err) {
         if ((err as Error).name === "AbortError") {

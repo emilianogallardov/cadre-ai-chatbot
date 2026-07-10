@@ -153,6 +153,12 @@ function streamModelResponse(
           responseText += delta;
           send({ type: "text", delta });
         }
+        // Token BEFORE cards (Codex #1): a first-turn escalation card must
+        // find the stored token by the time the visitor submits the form, so
+        // the lead links to its conversation.
+        if (storagePlan.mintedToken) {
+          send({ type: "conversation", token: storagePlan.mintedToken });
+        }
         // Deterministic card selection (ADR-004): derived from the turn's
         // text server-side, never model-emitted.
         for (const card of selectActionCards(
@@ -160,9 +166,6 @@ function streamModelResponse(
           responseText,
         )) {
           send({ type: "action", card });
-        }
-        if (storagePlan.mintedToken) {
-          send({ type: "conversation", token: storagePlan.mintedToken });
         }
         scheduleStoreTurn(storagePlan, lastUser?.content ?? "", responseText);
         send({ type: "done" });
@@ -208,14 +211,15 @@ function streamMockResponse(
         send({ type: "text", delta: word });
         await new Promise((r) => setTimeout(r, 15));
       }
+      // Storage runs on the mock path too (when configured): the full ADR-008
+      // flow stays testable without model spend. Token before cards, matching
+      // the real path.
+      if (storagePlan.mintedToken) {
+        send({ type: "conversation", token: storagePlan.mintedToken });
+      }
       // The mock exercises the same deterministic selector as the real path.
       for (const card of selectActionCards(lastUser?.content ?? "", reply)) {
         send({ type: "action", card });
-      }
-      // Storage runs on the mock path too (when configured): the full ADR-008
-      // flow stays testable without model spend.
-      if (storagePlan.mintedToken) {
-        send({ type: "conversation", token: storagePlan.mintedToken });
       }
       scheduleStoreTurn(storagePlan, lastUser?.content ?? "", reply);
       send({ type: "done" });

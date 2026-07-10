@@ -59,16 +59,24 @@ alter table messages enable row level security;
 -- messages cascade with their conversation, escalations are swept by age.
 create extension if not exists pg_cron;
 
-select cron.schedule(
-  'delete-old-conversations',
-  '0 9 * * *',
-  $$delete from conversations where last_message_at < now() - interval '30 days'$$
-);
-select cron.schedule(
-  'delete-old-escalations',
-  '0 9 * * *',
-  $$delete from escalations where created_at < now() - interval '30 days'$$
-);
+-- Unschedule-first makes re-applying this migration idempotent: cron.schedule
+-- with an existing job name would otherwise create a duplicate job.
+do $do$
+begin
+  perform cron.unschedule(jobid) from cron.job
+    where jobname in ('delete-old-conversations', 'delete-old-escalations');
+  perform cron.schedule(
+    'delete-old-conversations',
+    '0 9 * * *',
+    $$delete from conversations where last_message_at < now() - interval '30 days'$$
+  );
+  perform cron.schedule(
+    'delete-old-escalations',
+    '0 9 * * *',
+    $$delete from escalations where created_at < now() - interval '30 days'$$
+  );
+end
+$do$;
 
 comment on table conversations is
   'ADR-008 chat session; server-minted signed id. 30-day retention via pg_cron.';

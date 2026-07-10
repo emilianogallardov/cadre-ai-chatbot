@@ -18,8 +18,10 @@ export const PRIVATE_KEY = "cadre-private-mode";
 /** Notice-at-collection copy, keyed to whether private mode is on (ADR-008 #2). */
 export const NOTICE_DEFAULT =
   "Chats are saved to help Cadre improve support — please don't share sensitive info.";
+// "New messages": private mode stops future writes; turns saved before the
+// toggle stay saved until "Delete this chat" removes them (Codex #3).
 export const NOTICE_PRIVATE =
-  "Private mode is on — Cadre isn't saving this chat.";
+  "Private mode is on — new messages aren't being saved.";
 
 /** The single line shown under the composer flips its first clause in private mode. */
 export function noticeText(privateMode: boolean): string {
@@ -28,41 +30,61 @@ export function noticeText(privateMode: boolean): string {
 
 // --- session state ---------------------------------------------------------
 
-export function readConversationToken(): string | null {
+// In-memory mirror, the source of truth for reads. sessionStorage is only the
+// per-tab persistence layer (surviving reloads); when it throws (blocked
+// storage, quota), state still works for the life of the page — so a Private
+// toggle can never be silently dropped and revert to saving (Codex #2).
+let memoryToken: string | null = null;
+let memoryPrivate = false;
+let hydrated = false;
+
+/** Pull persisted values into the mirror once, on first client-side read. */
+function hydrate(): void {
+  if (hydrated || typeof window === "undefined") return;
+  hydrated = true;
   try {
-    return sessionStorage.getItem(TOKEN_KEY) || null;
+    memoryToken = sessionStorage.getItem(TOKEN_KEY) || null;
+    memoryPrivate = sessionStorage.getItem(PRIVATE_KEY) === "1";
   } catch {
-    return null;
+    // Persistence unavailable; the mirror starts from defaults.
   }
 }
 
+export function readConversationToken(): string | null {
+  hydrate();
+  return memoryToken;
+}
+
 export function writeConversationToken(token: string): void {
+  hydrate();
+  memoryToken = token;
   try {
     sessionStorage.setItem(TOKEN_KEY, token);
   } catch {
-    // Storage unavailable: the token lives only in the subscriber snapshot.
+    // Mirror already updated; the token just won't survive a reload.
   }
   emit();
 }
 
 export function clearConversationToken(): void {
+  hydrate();
+  memoryToken = null;
   try {
     sessionStorage.removeItem(TOKEN_KEY);
   } catch {
-    // Nothing to clear if storage is unavailable.
+    // Mirror already cleared.
   }
   emit();
 }
 
 export function readPrivateMode(): boolean {
-  try {
-    return sessionStorage.getItem(PRIVATE_KEY) === "1";
-  } catch {
-    return false;
-  }
+  hydrate();
+  return memoryPrivate;
 }
 
 export function writePrivateMode(on: boolean): void {
+  hydrate();
+  memoryPrivate = on;
   try {
     if (on) {
       sessionStorage.setItem(PRIVATE_KEY, "1");
@@ -70,9 +92,16 @@ export function writePrivateMode(on: boolean): void {
       sessionStorage.removeItem(PRIVATE_KEY);
     }
   } catch {
-    // Storage unavailable: private mode holds only in the subscriber snapshot.
+    // Mirror already updated; the preference just won't survive a reload.
   }
   emit();
+}
+
+/** Resets the in-memory mirror (tests only). */
+export function resetSessionStateForTests(): void {
+  memoryToken = null;
+  memoryPrivate = false;
+  hydrated = false;
 }
 
 /**
