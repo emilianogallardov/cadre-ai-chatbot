@@ -68,8 +68,33 @@ function readIntEnv(name: string, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+/**
+ * Resolve the Upstash REST URL + token from the environment, accepting three
+ * naming schemes so the limiter works however Upstash was wired:
+ *   1. the canonical names this repo documents (`UPSTASH_REDIS_REST_URL/TOKEN`);
+ *   2. the Vercel Upstash-for-Redis integration's names when connected with an
+ *      `UPSTASH_REDIS` prefix (`UPSTASH_REDIS_KV_REST_API_URL/TOKEN`);
+ *   3. that integration's default/unprefixed names (`KV_REST_API_URL/TOKEN`).
+ * The read-write token is required (the limiter increments counters), so the
+ * read-only token is never consulted. Empty strings are treated as unset.
+ */
+export function resolveUpstashCreds(): { url?: string; token?: string } {
+  const url =
+    process.env.UPSTASH_REDIS_REST_URL ||
+    process.env.UPSTASH_REDIS_KV_REST_API_URL ||
+    process.env.KV_REST_API_URL ||
+    undefined;
+  const token =
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    process.env.UPSTASH_REDIS_KV_REST_API_TOKEN ||
+    process.env.KV_REST_API_TOKEN ||
+    undefined;
+  return { url, token };
+}
+
 function getConfig(): Config {
   if (cachedConfig) return cachedConfig;
+  const creds = resolveUpstashCreds();
   cachedConfig = {
     perIp: readIntEnv("RATE_LIMIT_PER_IP_PER_MINUTE", 10),
     globalPerDay: readIntEnv("RATE_LIMIT_GLOBAL_PER_DAY", 400),
@@ -78,8 +103,8 @@ function getConfig(): Config {
       3,
     ),
     deletesPerIpPerDay: readIntEnv("RATE_LIMIT_DELETES_PER_IP_PER_DAY", 20),
-    redisUrl: process.env.UPSTASH_REDIS_REST_URL || undefined,
-    redisToken: process.env.UPSTASH_REDIS_REST_TOKEN || undefined,
+    redisUrl: creds.url,
+    redisToken: creds.token,
   };
   return cachedConfig;
 }

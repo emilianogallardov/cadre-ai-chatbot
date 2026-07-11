@@ -8,7 +8,10 @@
  */
 export const runtime = "nodejs";
 
+import { resolveUpstashCreds } from "@/lib/limits/ratelimit";
+
 export async function GET() {
+  const upstash = resolveUpstashCreds();
   const configured = {
     gateway: Boolean(process.env.OPENROUTER_API_KEY),
     storage: Boolean(
@@ -16,10 +19,7 @@ export async function GET() {
         process.env.SUPABASE_SECRET_KEY &&
         process.env.CONVERSATION_SIGNING_SECRET,
     ),
-    durableRateLimit: Boolean(
-      process.env.UPSTASH_REDIS_REST_URL &&
-        process.env.UPSTASH_REDIS_REST_TOKEN,
-    ),
+    durableRateLimit: Boolean(upstash.url && upstash.token),
   };
   const healthy = configured.gateway && configured.storage;
 
