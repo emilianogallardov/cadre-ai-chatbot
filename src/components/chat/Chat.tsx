@@ -13,9 +13,12 @@ import type {
 } from "@/lib/chat/types";
 import { toPayloadMessages } from "@/lib/chat/payload";
 import {
+  beginConversationDeletion,
   buildChatRequestBody,
   clearConversationToken,
   deleteSucceeded,
+  endConversationDeletion,
+  isConversationDeletionInProgress,
   noticeText,
   readConversationToken,
   readPrivateMode,
@@ -81,6 +84,10 @@ export function Chat() {
     // re-create the conversation right after the delete (Codex #1).
     if (!token || deleting || status === "streaming") return;
     setDeleting(true);
+    // Module-level synchronous flag: send() and escalation submits check it so
+    // no new request can reuse the token while its record is being deleted and
+    // silently recreate the conversation (Codex round 9 #1).
+    beginConversationDeletion();
     setAnnounce(null);
     try {
       const res = await fetch("/api/conversations", {
@@ -93,6 +100,9 @@ export function Chat() {
         // visitor can keep reading it.
         clearConversationToken();
         setAnnounce("This chat was deleted from Cadre's records.");
+        // The Delete button unmounts with the token; move focus to the
+        // composer instead of letting it fall to <body> (Codex round 9 #6).
+        document.getElementById("chat-input")?.focus();
       } else {
         setAnnounce(
           "Couldn't delete this chat just now. Please try again in a moment.",
@@ -103,6 +113,7 @@ export function Chat() {
         "Couldn't delete this chat just now. Please try again in a moment.",
       );
     } finally {
+      endConversationDeletion();
       setDeleting(false);
     }
   }, [deleting, status]);
@@ -120,7 +131,16 @@ export function Chat() {
   const send = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || status === "streaming" || inFlightRef.current) return;
+      if (
+        !trimmed ||
+        status === "streaming" ||
+        inFlightRef.current ||
+        // A turn started mid-delete would carry the token being deleted and
+        // recreate the conversation after the delete lands (Codex round 9 #1).
+        isConversationDeletionInProgress()
+      ) {
+        return;
+      }
       inFlightRef.current = true;
 
       // A new user message supersedes any reply still being read aloud.
@@ -200,13 +220,13 @@ export function Chat() {
           setErrorText(
             (err as Error).name === "StreamError"
               ? (err as Error).message
-              : "Something went wrong reaching the assistant. Your message " +
-                  "is back in the box — try again, or contact Cadre directly " +
-                  "at hello@gocadre.ai.",
+              : "Something went wrong reaching the assistant. Please try " +
+                  "again, or contact Cadre directly at hello@gocadre.ai.",
           );
-          // Put the failed message back in the composer so retrying is one
-          // click, and drop the empty assistant placeholder so retry starts
-          // clean.
+          // Offer the failed message back so retrying is one click (the
+          // composer only accepts it if the visitor hasn't typed something
+          // new meanwhile — Codex round 9 #2), and drop the empty assistant
+          // placeholder so retry starts clean.
           setDraft({ value: trimmed, id: Date.now() });
           setItems((prev) =>
             prev.filter(
@@ -381,7 +401,16 @@ export function Chat() {
 
       <div className="border-t border-zinc-200/70 bg-white/80 shadow-[0_-20px_60px_-40px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-950/80">
         <div className="mx-auto w-full max-w-3xl px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3">
-      {items.length === 0 && <SuggestedPrompts onPick={send} />}
+      {items.length === 0 && (
+        <SuggestedPrompts
+          onPick={(text) => {
+            send(text);
+            // The prompt rail unmounts on first send; keep keyboard focus on
+            // a live control instead of dropping it (Codex round 9 #6).
+            document.getElementById("chat-input")?.focus();
+          }}
+        />
+      )}
 
       {errorText && (
         <p
@@ -393,7 +422,7 @@ export function Chat() {
       )}
 
       <Composer
-        disabled={status === "streaming"}
+        disabled={status === "streaming" || deleting}
         draft={draft}
         onSend={send}
         onStop={stop}

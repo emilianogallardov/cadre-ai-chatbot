@@ -19,12 +19,12 @@ export default function PrivacyPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <Link
         href="/"
-        className="text-sm text-neutral-500 underline-offset-2 hover:underline"
+        className="text-sm text-neutral-500 underline-offset-2 hover:underline dark:text-neutral-400"
       >
         &larr; Back to chat
       </Link>
       <h1 className="mt-4 text-2xl font-semibold">Privacy</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
         Cadre AI Resource Agent &middot; Effective July 10, 2026
       </p>
 

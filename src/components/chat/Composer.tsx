@@ -24,11 +24,15 @@ export function Composer({
 
   // When a send fails the parent hands the submitted text back so retrying is
   // one click — the composer cleared it optimistically on submit. Applied as
-  // a render-time state adjustment (not an effect) per React guidance.
+  // a render-time state adjustment (not an effect) per React guidance. Only
+  // an EMPTY composer accepts the restore: the input stays editable during a
+  // reply, so a visitor may already be typing their next question when the
+  // stream fails — their words win over ours (Codex round 9 #2). The draft id
+  // is consumed either way so a later manual clear doesn't resurrect it.
   const [appliedDraftId, setAppliedDraftId] = useState<number | null>(null);
   if (draft && draft.id !== appliedDraftId) {
     setAppliedDraftId(draft.id);
-    setText(draft.value);
+    if (!text) setText(draft.value);
   }
 
   // Interim speech is previewed live; the committed text plus any interim is
@@ -47,7 +51,11 @@ export function Composer({
   function submit(e: FormEvent) {
     e.preventDefault();
     if (disabled || !value.trim()) return;
-    if (speech.listening) speech.stop();
+    // cancel(), not stop(): stop() lets the engine deliver one last final
+    // result, which would repopulate the just-cleared composer with the text
+    // that was already sent (Codex round 9 #3). What the user reviewed —
+    // committed text plus visible interim — is exactly what goes out.
+    if (speech.listening) speech.cancel();
     onSend(value);
     setText("");
     setInterim("");
@@ -91,7 +99,7 @@ export function Composer({
           aria-pressed={speech.listening}
           className={`grid h-10 w-10 cursor-pointer place-items-center rounded-xl border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 ${
             speech.listening
-              ? "animate-pulse border-red-500 text-red-600 dark:border-red-500 dark:text-red-400"
+              ? "animate-pulse border-red-500 text-red-600 motion-reduce:animate-none dark:border-red-500 dark:text-red-400"
               : "border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
           }`}
         >

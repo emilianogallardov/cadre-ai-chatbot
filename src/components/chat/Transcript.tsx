@@ -8,8 +8,11 @@ import { isNearBottom } from "./stickToBottom";
 import { isVerifiedHref } from "./verifiedLinks";
 
 // Model prose is untrusted: only verified Cadre origins become clickable
-// (see verifiedLinks.ts); every other anchor renders as its text.
-const markdownComponents: Components = {
+// (see verifiedLinks.ts); every other anchor renders as its text. Images are
+// never fetched — `![x](url)` would fire a request to an arbitrary host
+// (tracking pixel) or impersonate trusted content, so an image renders as its
+// alt text only (Codex round 9 #4). Exported for the rendering-safety tests.
+export const markdownComponents: Components = {
   a: ({ href, children }) =>
     isVerifiedHref(href) ? (
       <a
@@ -23,6 +26,7 @@ const markdownComponents: Components = {
     ) : (
       <>{children}</>
     ),
+  img: ({ alt }) => (alt ? <>{alt}</> : null),
 };
 
 export function Transcript({
@@ -96,9 +100,17 @@ export function Transcript({
         onScroll={handleScroll}
         onWheel={handleUserScrollIntent}
         onTouchMove={handleUserScrollIntent}
-        className="chat-scroll flex-1 overflow-y-auto"
+        // Focusable so keyboard users can scroll the history with arrow/page
+        // keys — role="log" alone adds no focusability, and the fixed-height
+        // shell leaves no other way to scroll by keyboard (Codex round 9 #5).
+        tabIndex={0}
+        className="chat-scroll flex-1 overflow-y-auto focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-zinc-500"
         role="log"
         aria-live="polite"
+        // Streaming reparses the markdown subtree on every token; aria-busy
+        // asks screen readers to hold announcements until the reply settles
+        // instead of narrating each restructure (Codex round 9 #7).
+        aria-busy={streaming}
         aria-label="Conversation"
       >
         <div className="mx-auto w-full max-w-3xl px-4 py-6">
@@ -141,7 +153,7 @@ export function Transcript({
                         C
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
                           Cadre AI
                         </p>
                         {item.message.content === "" &&

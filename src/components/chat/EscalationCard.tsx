@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ActionCard } from "@/lib/chat/types";
 import {
+  isConversationDeletionInProgress,
   linkedConversationToken,
   readConversationToken,
   readPrivateMode,
@@ -16,27 +17,41 @@ export const GENERIC_FAILURE = `Something went wrong sending your request. Pleas
 /**
  * Per-browser-session cap on successful escalations, persisted in
  * sessionStorage so a reload does not reset it (the server's per-IP daily cap
- * is the real guard; this only keeps the UI honest). Falls back to a
- * module-level counter when storage is unavailable.
+ * is the real guard; this only keeps the UI honest). A module-level mirror is
+ * ALWAYS advanced and reads return the max of both, so a storage where reads
+ * work but writes throw (quota) still counts submissions — a read-side-only
+ * fallback would let the cap never advance (Codex round 9 #8).
  */
 const MAX_SESSION_SUBMISSIONS = 2;
 const SESSION_KEY = "cadre-escalations-submitted";
-let fallbackCount = 0;
+let mirrorCount = 0;
 
-function submissionCount(): number {
+function storedCount(): number {
   try {
     return Number(sessionStorage.getItem(SESSION_KEY) ?? "0") || 0;
   } catch {
-    return fallbackCount;
+    return 0;
   }
 }
 
-function recordSubmission(): void {
+function submissionCount(): number {
+  return Math.max(storedCount(), mirrorCount);
+}
+
+/** Exported for tests; the submit path is the only production caller. */
+export function recordSubmission(): void {
+  const next = submissionCount() + 1;
+  mirrorCount = next;
   try {
-    sessionStorage.setItem(SESSION_KEY, String(submissionCount() + 1));
+    sessionStorage.setItem(SESSION_KEY, String(next));
   } catch {
-    fallbackCount += 1;
+    // Mirror already advanced; the count just won't survive a reload.
   }
+}
+
+/** Resets the in-memory mirror (tests only). */
+export function resetEscalationStateForTests(): void {
+  mirrorCount = 0;
 }
 
 /**
@@ -127,6 +142,19 @@ export function EscalationCard({ card }: { card: ActionCard }) {
   // rapid second click could pass the `sending` check before React re-renders.
   const inFlight = useRef(false);
 
+  // A successful submit replaces the focused form with the confirmation card;
+  // move focus onto its heading (only on that transition — not when the card
+  // mounts already-confirmed from the session cap) so keyboard and screen
+  // reader users land on the outcome instead of <body> (Codex round 9 #6).
+  const confirmedHeadingRef = useRef<HTMLParagraphElement>(null);
+  const focusOnConfirmRef = useRef(false);
+  useEffect(() => {
+    if (phase.name === "confirmed" && focusOnConfirmRef.current) {
+      focusOnConfirmRef.current = false;
+      confirmedHeadingRef.current?.focus();
+    }
+  }, [phase]);
+
   const sending = phase.name === "sending";
   const ready = canSubmit({ name, email, question, consent });
 
@@ -144,10 +172,11 @@ export function EscalationCard({ card }: { card: ActionCard }) {
       // Link the lead to the stored conversation only when private mode is off
       // and a token exists (ADR-008 #8). Private escalations are still stored,
       // just unlinked. Read at submit time so a mid-conversation toggle wins.
-      const conversationToken = linkedConversationToken(
-        readPrivateMode(),
-        readConversationToken(),
-      );
+      // Never link a token whose record is mid-deletion — the lead would
+      // reference a conversation that no longer exists (Codex round 9 #1).
+      const conversationToken = isConversationDeletionInProgress()
+        ? undefined
+        : linkedConversationToken(readPrivateMode(), readConversationToken());
       const res = await fetch("/api/escalations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,6 +191,7 @@ export function EscalationCard({ card }: { card: ActionCard }) {
       const outcome = outcomeFromResponse(await res.json());
       if (outcome.status === "confirmed") {
         recordSubmission();
+        focusOnConfirmRef.current = true;
         setPhase({ name: "confirmed", referenceId: outcome.referenceId });
       } else {
         setPhase({ name: "form", error: outcome.message });
@@ -195,7 +225,11 @@ export function EscalationCard({ card }: { card: ActionCard }) {
             </svg>
           </span>
           <div>
-            <p className="text-sm font-semibold tracking-tight">
+            <p
+              ref={confirmedHeadingRef}
+              tabIndex={-1}
+              className="text-sm font-semibold tracking-tight outline-none"
+            >
               Request received
             </p>
             <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">

@@ -67,7 +67,14 @@ export interface SpeechInput {
   supported: boolean;
   listening: boolean;
   start: (onTranscript: TranscriptHandler) => void;
+  /** Graceful stop: the engine may still deliver one final transcript. */
   stop: () => void;
+  /**
+   * Hard stop: detaches the transcript handler before aborting so no trailing
+   * result fires. Use when the current input has already been consumed (e.g.
+   * submit), where a late final result would repopulate a cleared composer.
+   */
+  cancel: () => void;
 }
 
 /**
@@ -95,6 +102,22 @@ export function useSpeechInput(): SpeechInput {
     } catch {
       // Some engines throw if stop() is called before start resolves; ignore.
     }
+  }, []);
+
+  const cancel = useCallback(() => {
+    const rec = recognitionRef.current;
+    if (!rec) return;
+    // Detach the result handler FIRST: stop()/abort() may still flush a final
+    // onresult, which must not reach the (already consumed) transcript
+    // callback (Codex round 9 #3).
+    rec.onresult = null;
+    try {
+      rec.abort();
+    } catch {
+      // Same engine quirk as stop(); onend still clears the ref.
+    }
+    recognitionRef.current = null;
+    setListening(false);
   }, []);
 
   const start = useCallback((onTranscript: TranscriptHandler) => {
@@ -161,5 +184,5 @@ export function useSpeechInput(): SpeechInput {
     [],
   );
 
-  return { supported, listening, start, stop };
+  return { supported, listening, start, stop, cancel };
 }

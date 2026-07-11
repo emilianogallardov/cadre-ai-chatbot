@@ -4,6 +4,8 @@ import {
   GENERIC_FAILURE,
   hasSubmittedEscalation,
   outcomeFromResponse,
+  recordSubmission,
+  resetEscalationStateForTests,
   type EscalationFields,
 } from "../EscalationCard";
 
@@ -82,6 +84,7 @@ describe("hasSubmittedEscalation", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    resetEscalationStateForTests();
   });
 
   it("is false before any submission", () => {
@@ -110,5 +113,58 @@ describe("hasSubmittedEscalation", () => {
       },
     });
     expect(hasSubmittedEscalation()).toBe(false);
+  });
+});
+
+describe("recordSubmission counting (Codex round 9 #8)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetEscalationStateForTests();
+  });
+
+  it("still counts when reads work but writes throw (quota-style failure)", () => {
+    // The round-9 bug: a read-side-only fallback meant reads kept returning
+    // the stale stored value and the session cap never advanced.
+    const stored = "0";
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => stored,
+      setItem: () => {
+        throw new Error("QuotaExceededError");
+      },
+    });
+    expect(hasSubmittedEscalation()).toBe(false);
+    recordSubmission();
+    expect(hasSubmittedEscalation()).toBe(true);
+    recordSubmission();
+    // The in-memory mirror keeps advancing past the frozen stored value.
+    expect(stored).toBe("0");
+    expect(hasSubmittedEscalation()).toBe(true);
+  });
+
+  it("counts when storage is entirely unavailable", () => {
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => {
+        throw new Error("storage disabled");
+      },
+      setItem: () => {
+        throw new Error("storage disabled");
+      },
+    });
+    recordSubmission();
+    expect(hasSubmittedEscalation()).toBe(true);
+  });
+
+  it("persists through storage when writes work", () => {
+    let stored: string | null = null;
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => stored,
+      setItem: (_key: string, value: string) => {
+        stored = value;
+      },
+    });
+    recordSubmission();
+    expect(stored).toBe("1");
+    recordSubmission();
+    expect(stored).toBe("2");
   });
 });

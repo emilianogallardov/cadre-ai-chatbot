@@ -11,7 +11,14 @@
 
 import type { ChatMessage, ChatRequest } from "@/lib/chat/types";
 
-/** Per-tab keys. sessionStorage so a new tab starts a fresh conversation. */
+/**
+ * Browsing-context session keys (sessionStorage). A genuinely new tab starts a
+ * fresh conversation, but a duplicated or opener-created tab inherits a COPY
+ * of these values and then diverges — the two tabs never synchronize (the
+ * subscription below notifies only this tab's listeners). Acceptable here:
+ * the copied token is the visitor's own, and each tab simply continues or
+ * forks its own conversation (Codex round 9 #11).
+ */
 export const TOKEN_KEY = "cadre-conversation-token";
 export const PRIVATE_KEY = "cadre-private-mode";
 
@@ -97,11 +104,33 @@ export function writePrivateMode(on: boolean): void {
   emit();
 }
 
+// --- deletion coordination ---------------------------------------------------
+// Synchronous module flag set for the lifetime of a DELETE /api/conversations
+// request. React state updates flush asynchronously, so a send (or an
+// escalation submit) started while the delete is still in flight could reuse
+// the token being deleted — the post-stream store would then recreate the
+// conversation server-side right after the client cleared its only deletion
+// handle (Codex round 9 #1, HIGH).
+let deletionInProgress = false;
+
+export function beginConversationDeletion(): void {
+  deletionInProgress = true;
+}
+
+export function endConversationDeletion(): void {
+  deletionInProgress = false;
+}
+
+export function isConversationDeletionInProgress(): boolean {
+  return deletionInProgress;
+}
+
 /** Resets the in-memory mirror (tests only). */
 export function resetSessionStateForTests(): void {
   memoryToken = null;
   memoryPrivate = false;
   hydrated = false;
+  deletionInProgress = false;
 }
 
 /**

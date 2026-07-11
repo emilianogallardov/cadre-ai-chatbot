@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChatMessage } from "@/lib/chat/types";
 import {
+  beginConversationDeletion,
   buildChatRequestBody,
   clearConversationToken,
   deleteSucceeded,
+  endConversationDeletion,
+  isConversationDeletionInProgress,
   linkedConversationToken,
   NOTICE_DEFAULT,
   NOTICE_PRIVATE,
@@ -137,5 +140,25 @@ describe("session state falls back to the in-memory mirror (Codex #2)", () => {
     expect(readConversationToken()).toBe("uuid.sig");
     clearConversationToken();
     expect(readConversationToken()).toBeNull();
+  });
+});
+
+describe("deletion coordination flag (Codex round 9 #1)", () => {
+  afterEach(() => {
+    resetSessionStateForTests();
+  });
+
+  it("is off by default and tracks begin/end", () => {
+    expect(isConversationDeletionInProgress()).toBe(false);
+    beginConversationDeletion();
+    expect(isConversationDeletionInProgress()).toBe(true);
+    endConversationDeletion();
+    expect(isConversationDeletionInProgress()).toBe(false);
+  });
+
+  it("is cleared by the test reset so a failed delete can't leak between tests", () => {
+    beginConversationDeletion();
+    resetSessionStateForTests();
+    expect(isConversationDeletionInProgress()).toBe(false);
   });
 });
