@@ -297,3 +297,22 @@ tests, lint, typecheck, production build.
   researched requirements skill (OWASP LLM Top 10 2025 + WCAG/NN-g
   baselines) and auditing this bot against it — the remaining opens were
   operations-tier and are documented as triggers, not silently absent.
+
+## Round 9 — the focused UI-layer lens (2026-07-11, pre-submission)
+
+- **A consolidated review of merged work is not redundant with the reviews
+  of its increments:** rounds 3-8 read every one of these files, but only a
+  UI-scoped prompt ("hunt interaction-state races, rendering safety,
+  accessibility correctness") surfaced the delete/send race (HIGH — a send
+  during the pending DELETE recreates the conversation the user just
+  deleted) and the markdown image-gating hole (`![x](url)` fetched from
+  arbitrary hosts while anchors were carefully whitelisted). Review scope is
+  a search strategy, not a formality.
+- **The orchestrator pre-reads before the reviewer returns:** re-reading the
+  files while Codex ran independently surfaced one of its findings (the
+  dark-mode eyebrow) in advance — cheap validation that the reviewer and
+  the adjudicator are looking at the same reality.
+- **Docs debts get paid before they compound:** rounds 7-8 had timeline
+  entries but no review records; both were backfilled from the session logs
+  BEFORE round 9 ran, so the review series stays uniformly evidenced
+  (docs/reviews/ now has one record per round).

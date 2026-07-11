@@ -69,7 +69,7 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 24 files, 273/273 tests, lint, typecheck, production build ✅
+- `npm run verify`: 26 files, 287/287 tests, lint, typecheck, production build ✅ (2026-07-11, post round 9)
 - Session + scale hardening (round 6, owner-directed): the session wall fixed
   (rolling window valid by construction; 50-exchange endurance tests through
   the real route), spend-guarded load harness + docs/SCALING.md with measured
@@ -94,7 +94,16 @@ selector deliberately favors offering a human over staying silent).
   plus intermittent empty completions in earlier runs), and the vacuous-reply
   guarantee enforced permanently in unit tests
   (docs/benchmarks/2026-07-11-model-benchmark.md; ADR-007 addenda) ✅
-- Timeline: append-only through T-051 with evidence per entry ✅
+- Rounds 7-9 closed: round 7 full-repo grading pass 8.3/10 with its four
+  claims-drift residuals fixed same hour
+  (docs/reviews/2026-07-10-codex-round7-grading-pass.md); round 8 increment
+  review 6/6 closed — CI token scoping, dark-mode contrast, complete touch
+  targets, health no-store
+  (docs/reviews/2026-07-10-codex-round8-increment-review.md); round 9
+  consolidated UI-layer review 11/11 closed — incl. the delete/send-race
+  HIGH and markdown image gating
+  (docs/reviews/2026-07-11-codex-round9-ui-layer-review.md) ✅
+- Timeline: append-only through T-055 with evidence per entry ✅
 
 ## Independent rubric audit (212-item planning checklist)
 
