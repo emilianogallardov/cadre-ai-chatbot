@@ -153,14 +153,16 @@ does not represent model TTFB).
 | Local mock, DEFAULT caps — limiter correctness | 10 | 20s | 31ms | 41ms | 754ms | 763ms | 10 | 10 | 0 | 0 | PASS |
 | Controlled live-prod burst, real model (within daily budget) | 3 | 15s | 1218ms | 2213ms | 3022ms | 4317ms | 12 | 3 | 0 | 0 | PASS |
 | Live prod, real browser, 5 CONCURRENT sessions (2026-07-11) | 5 | 4 rounds | 972ms | 1653ms | 2549ms | 3900ms | 20 | 0 | 0 | 0 | PASS |
-| Live prod, real browser, 40-exchange endurance session (2026-07-11) | 1 | ~11 min | 948ms | 1856ms | 3208ms | 4421ms | 40 | 0 | 0 | 0 | PASS |
+| Live prod, real browser, 40-exchange endurance session (2026-07-11) | 1 | ~9 min | 948ms | 1856ms | 3208ms | 4421ms | 40 | 0 | 0 | 0 | PASS |
 
 **Live browser evidence (2026-07-11):** the two bottom rows were driven through
 real Chrome against prod — five sessions streaming simultaneously, and one
-40-exchange session whose median TTFB for turns 21–40 (934ms) matched turns
-1–20 (956ms): latency is flat with session depth, the O(1) window working
-live. Boundary probes fired during the concurrent run all held, and every
-stored conversation audited back byte-for-byte from Supabase. Full report:
+40-exchange session with no observed median TTFB growth between its halves
+(956ms vs 934ms) — consistent with the O(1) window (whose guarantee lives in
+the implementation and tests, not one run). Boundary probes fired during the
+concurrent run all held; every stored USER message audited back byte-for-byte
+from Supabase (assistant bodies length-checked). Quantiles are nearest-rank
+on small samples (n=20/40). Full report:
 docs/benchmarks/2026-07-11-live-browser-sessions.md.
 
 **Session endurance:** a 50-exchange conversation driven through the real route
