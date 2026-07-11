@@ -65,6 +65,27 @@ const INTENTS: ReadonlyArray<{
 const ESCALATION_SIGNAL =
   /\b(don't have|do not have|can't|cannot|not able|no information|not published|not something i|outside)\b/i;
 
+/**
+ * The visitor explicitly asks to be contacted / followed up with. This is the
+ * clearest possible escalation signal and — unlike ESCALATION_SIGNAL — it is
+ * read off the USER's text, so it fires even when the model answers
+ * confidently (the "Can I have someone follow up with me" turn matched no
+ * informational intent AND drew a confident answer, so no card appeared).
+ */
+const ESCALATION_REQUEST =
+  /\b(follow[ -]?up|get back to me|(contact|reach|email|message) me|have someone|be in touch|hear back|connect me (to|with))\b/i;
+
+/**
+ * The assistant's answer references the on-screen follow-up form. Mentioning
+ * the form is a promise the UI must keep: if the bot says "fill in the form
+ * below", the form has to be there. Detecting the mention and rendering the
+ * card closes the exact defect where the bot pointed at a form that was not on
+ * screen. Targets form/submission phrasing only — NOT the plain contact route
+ * ("reach out to a strategist at …"), which stays cardless.
+ */
+const FORM_MENTION =
+  /\b(follow[- ]?up request form|request form|form (just )?below|below this chat|fill (in|out) your|consent box|submit(ting)? (the|this|your) (form|request))\b/i;
+
 const ESCALATION_CARD: ActionCard = {
   kind: "escalation",
   title: "Send your question to Cadre",
@@ -74,10 +95,17 @@ const ESCALATION_CARD: ActionCard = {
 const MAX_CARDS = 2;
 
 /**
- * Derive up to two suggested action cards for a turn. Intent is matched on the
- * user's text in fixed priority order; escalation is a fallback offered only
- * when nothing informational matched and the assistant signalled it could not
- * answer. Returns [] when nothing matches. Pure and deterministic.
+ * Derive up to two suggested action cards for a turn. Informational intents are
+ * matched on the user's text in fixed priority order. The escalation form is
+ * then added when it is legitimately offered:
+ *   1. the visitor explicitly asks to be contacted / followed up with, or
+ *   2. the assistant's answer references the on-screen form (a mention the UI
+ *      must honor), or
+ *   3. (conservative fallback) the assistant disclaimed knowledge and no
+ *      informational card matched.
+ * Triggers 1 and 2 are explicit and fire even alongside an informational card;
+ * trigger 3 stays gated on "no other card" because its signal is fuzzy. Pure
+ * and deterministic; returns [] when nothing matches.
  */
 export function selectActionCards(
   userText: string,
@@ -90,7 +118,15 @@ export function selectActionCards(
     if (pattern.test(userText)) cards.push(card);
   }
 
-  if (cards.length === 0 && ESCALATION_SIGNAL.test(assistantText)) {
+  const explicitEscalation =
+    ESCALATION_REQUEST.test(userText) || FORM_MENTION.test(assistantText);
+  const fallbackEscalation =
+    cards.length === 0 && ESCALATION_SIGNAL.test(assistantText);
+  if (
+    (explicitEscalation || fallbackEscalation) &&
+    cards.length < MAX_CARDS &&
+    !cards.some((c) => c.kind === "escalation")
+  ) {
     cards.push(ESCALATION_CARD);
   }
 

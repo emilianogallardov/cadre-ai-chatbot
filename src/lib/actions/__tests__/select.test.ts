@@ -98,6 +98,70 @@ describe("selectActionCards", () => {
     expect(cards).toEqual([]);
   });
 
+  it("escalates when the visitor explicitly asks to be followed up with", () => {
+    // The reported defect: this exact turn matched no informational intent AND
+    // drew a confident answer that pointed at the form, so no card appeared and
+    // the bot referenced a form that was not on screen.
+    const cards = selectActionCards(
+      "Can I have someone follow up with me",
+      "Absolutely. There's a follow-up request form just below this chat — " +
+        "you can fill in your name, email, and question, and check the " +
+        "consent box to submit it.",
+    );
+    expect(cards.map((c) => c.kind)).toContain("escalation");
+  });
+
+  it.each([
+    "can someone follow up with me?",
+    "please have someone contact me",
+    "I'd like someone to get back to me",
+    "can you reach me by email",
+    "would love to hear back from your team",
+    "connect me with a strategist please",
+  ])("routes explicit follow-up request %j to an escalation card", (userText) => {
+    expect(selectActionCards(userText, "Sure — happy to arrange that.")
+      .map((c) => c.kind)).toContain("escalation");
+  });
+
+  it.each([
+    "There's a follow-up request form just below this chat.",
+    "You can fill in your name, email, and question below.",
+    "Just check the consent box and submit the form to reach the team.",
+    "There is a request form below where you can leave your details.",
+  ])(
+    "renders the form whenever the assistant mentions it: %j",
+    (assistantText) => {
+      // Invariant: if the bot points the visitor at the on-screen form, the
+      // form must render. Even with a neutral user turn that hits no intent.
+      expect(
+        selectActionCards("thanks, what next?", assistantText).map(
+          (c) => c.kind,
+        ),
+      ).toContain("escalation");
+    },
+  );
+
+  it("does not treat the plain contact route as a form mention", () => {
+    // Offering the email/phone/contact page is NOT the on-screen form and must
+    // stay cardless (guards FORM_MENTION against false positives).
+    const cards = selectActionCards(
+      "Do you work with logistics companies?",
+      "Yes — Cadre publishes logistics experience. To explore fit, reach out " +
+        "to an AI strategist at https://www.cadreai.com/contact or hello@gocadre.ai.",
+    );
+    expect(cards).toEqual([]);
+  });
+
+  it("adds the form alongside an informational card when both are asked", () => {
+    const cards = selectActionCards(
+      "what does a strategist engagement cost, and can someone follow up with me?",
+      "",
+    );
+    const kinds = cards.map((c) => c.kind);
+    expect(kinds).toContain("strategy_contact");
+    expect(kinds).toContain("escalation");
+  });
+
   it("prefers an informational card over escalation", () => {
     // Assistant text carries an escalation signal, but the user asked for
     // something informational — the informational card wins and no escalation
