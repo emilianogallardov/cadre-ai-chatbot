@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Sourced from the six evaluated scenarios in
- * data/curated/scenario-coverage.md — these double as a live demo path.
+ * Four prompts drawn from the evaluated scenarios in
+ * data/curated/scenario-coverage.md — they double as a live demo path.
  */
 const PROMPTS = [
   "What does Cadre AI do, and do you work with construction companies?",
