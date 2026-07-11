@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "benchmark": "tsx scripts/benchmark.ts",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "quality": "tsx scripts/quality-metrics.ts"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.8",

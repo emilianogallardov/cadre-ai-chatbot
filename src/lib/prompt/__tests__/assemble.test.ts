@@ -51,9 +51,46 @@ describe("assemblePrompt system prompt", () => {
     }
   });
 
-  it("instructs concise plain prose with a clarifying question", () => {
+  it("instructs concise prose with a clarifying question", () => {
     expect(system).toMatch(/concise/i);
     expect(system).toMatch(/clarifying question/i);
+  });
+
+  // Spec: docs/specs/2026-07-11-answer-quality-voice-and-cta.md — the rules
+  // that fix the T-056 live-transcript findings, pinned so a future prompt
+  // edit can't silently drop them.
+
+  it("pins the voice register: first-person assistant, Cadre in third person", () => {
+    expect(system).toMatch(/first person \('I'\)/);
+    expect(system).toMatch(/Cadre in the\s+third person/);
+    expect(system).toMatch(/Never say 'we', 'our', or 'us' meaning Cadre/);
+  });
+
+  it("conditions contact details instead of offering them unconditionally", () => {
+    // The old unconditional instruction is gone…
+    expect(system).not.toContain("say so briefly and offer the verified contact route");
+    // …replaced by (a-or-b) AND not-already-visible. The conjunction matters:
+    // a disjunctive first draft let legitimate routing turns restate contacts
+    // back-to-back (caught by the quality-metrics enforcement run).
+    expect(system).toMatch(/ONLY when \(a\) the user asks/);
+    expect(system).toMatch(/\(b\) you cannot answer/);
+    expect(system).toMatch(/AND, in either case, only if the details are not already visible/);
+  });
+
+  it("forbids synthesizing entries into new Cadre claims", () => {
+    expect(system).toMatch(/Do not combine separate knowledge entries/);
+    expect(system).toMatch(/never stated as a Cadre example, capability, or outcome/);
+  });
+
+  it("breaks the reply formulas: conditional closing question, varied openings", () => {
+    expect(system).toMatch(/follow-up\s+question only when/);
+    expect(system).toMatch(/not on\s+every reply/);
+    expect(system).toMatch(/do not reuse the same scaffold/);
+  });
+
+  it("allows light markdown but still bans headers and tables", () => {
+    expect(system).toMatch(/Light markdown is fine/);
+    expect(system).toMatch(/no headers or tables/);
   });
 });
 

@@ -1,0 +1,221 @@
+{
+ "label": "baseline",
+ "model": "anthropic/claude-haiku-4.5",
+ "date": "2026-07-11T10:26:56.428Z",
+ "durationMs": 28081,
+ "metrics": {
+  "contactRepliesOf12": 9,
+  "contactViolationsOnGroundedTurns": [
+   4,
+   5,
+   9,
+   11,
+   12
+  ],
+  "consecutiveUnaskedContactPairs": 6,
+  "closingQuestionRate": 0.17,
+  "companyVoiceViolations": [
+   "turn 1: \"We help\"",
+   "turn 1: \"Our work\""
+  ],
+  "maxConsecutiveTrigramOverlap": 0.279,
+  "meanConsecutiveTrigramOverlap": 0.116,
+  "medianReplyChars": 641,
+  "synthesisOverreach": true
+ },
+ "targets": {
+  "contactRepliesOf12": "<=5 total; 0 on grounded (unwanted) turns is ideal, <=1 accepted",
+  "consecutiveUnaskedContactPairs": 0,
+  "closingQuestionRate": "<0.60",
+  "companyVoiceViolations": 0,
+  "medianReplyChars": ">=200",
+  "synthesisOverreach": false
+ },
+ "turns": [
+  {
+   "turn": 1,
+   "prompt": "What does Cadre AI do?",
+   "contact": "unwanted",
+   "hasContact": false,
+   "endsWithQuestion": true,
+   "voiceViolations": [
+    "We help",
+    "Our work"
+   ],
+   "chars": 873,
+   "replyExcerpt": "Cadre AI is an AI strategy and implementation consultancy. We help organizations identify high-ROI opportunities, prepare teams for adoption, and implement work"
+  },
+  {
+   "turn": 2,
+   "prompt": "How do I get in touch with someone there?",
+   "contact": "asked",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 378,
+   "replyExcerpt": "You can reach Cadre through any of these verified channels:\n\n**Contact page:** https://www.cadreai.com/contact\n\n**Email:** hello@gocadre.ai\n\n**Phone:** (619) 32"
+  },
+  {
+   "turn": 3,
+   "prompt": "What is the AI Maturity Index?",
+   "contact": "unwanted",
+   "hasContact": false,
+   "endsWithQuestion": true,
+   "voiceViolations": [],
+   "chars": 803,
+   "replyExcerpt": "The AI Maturity Index is Cadre's assessment tool that evaluates your organization across an eight-pillar AI transformation framework. You receive a grade in eac"
+  },
+  {
+   "turn": 4,
+   "prompt": "Tell me more about the eight pillars.",
+   "contact": "unwanted",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 1296,
+   "replyExcerpt": "Here's what Cadre publishes about the eight pillars:\n\n**Dedicated AI team** — having the right people and structure to lead AI work. **AI command center** — a c"
+  },
+  {
+   "turn": 5,
+   "prompt": "How does Cadre think about LLM selection?",
+   "contact": "unwanted",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 1001,
+   "replyExcerpt": "Cadre's approach to LLM and tool selection is use-case driven. The recommendation depends on several factors: the specific workflow, required quality, speed, co"
+  },
+  {
+   "turn": 6,
+   "prompt": "Summarize what Cadre could do for a logistics company in two sentences.",
+   "contact": "unwanted",
+   "hasContact": false,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 412,
+   "replyExcerpt": "Cadre helps logistics companies identify high-ROI AI opportunities—like field scheduling automation, route optimization, or supplier-confirmation workflows—and "
+  },
+  {
+   "turn": 7,
+   "prompt": "What's your pricing?",
+   "contact": "allowed",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 407,
+   "replyExcerpt": "Cadre doesn't publish general service pricing on its public pages—pricing depends on the specific engagement, scope, and your organization's needs.\n\nThe best wa"
+  },
+  {
+   "turn": 8,
+   "prompt": "Do you work with hospitals?",
+   "contact": "allowed",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 735,
+   "replyExcerpt": "Hospitals aren't listed among the industries Cadre publishes dedicated experience for. Cadre's published focus areas are professional services, private equity, "
+  },
+  {
+   "turn": 9,
+   "prompt": "What's Cadre's approach to data security?",
+   "contact": "unwanted",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 729,
+   "replyExcerpt": "Cadre's published data security approach emphasizes four key practices: selecting secure company-wide AI tools, reducing reliance on personal AI accounts for co"
+  },
+  {
+   "turn": 10,
+   "prompt": "Who's on the leadership team?",
+   "contact": "allowed",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 307,
+   "replyExcerpt": "I don't have information about Cadre's leadership team in my knowledge base. That's a great question for a direct conversation with the team.\n\nYou can reach out"
+  },
+  {
+   "turn": 11,
+   "prompt": "What industries does Cadre serve?",
+   "contact": "unwanted",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 553,
+   "replyExcerpt": "Cadre publishes dedicated experience across these industries: professional services, private equity, real estate, financial services, mortgage and lending, cons"
+  },
+  {
+   "turn": 12,
+   "prompt": "Thanks, this was really helpful.",
+   "contact": "unwanted",
+   "hasContact": true,
+   "endsWithQuestion": false,
+   "voiceViolations": [],
+   "chars": 234,
+   "replyExcerpt": "You're welcome! If you have more questions down the road or want to explore how Cadre might help your organization, feel free to reach out at https://www.cadrea"
+  }
+ ],
+ "transcript": [
+  {
+   "turn": 1,
+   "prompt": "What does Cadre AI do?",
+   "reply": "Cadre AI is an AI strategy and implementation consultancy. We help organizations identify high-ROI opportunities, prepare teams for adoption, and implement workflows, automations, and AI agents designed to improve revenue, profitability, and employee impact.\n\nOur work spans four core areas: AI Strategy, AI Leadership and Facilitation, AI Engineering, and AI Agents. We combine business prioritization, technical implementation, and organizational adoption to guide your transformation.\n\nWe've published dedicated experience across industries like professional services, financial services, real estate, manufacturing, retail, and others—and we work with departments ranging from legal and finance to sales and operations.\n\nIs there a specific area of AI transformation you're curious about, or would you like to explore whether Cadre might be a fit for your organization?"
+  },
+  {
+   "turn": 2,
+   "prompt": "How do I get in touch with someone there?",
+   "reply": "You can reach Cadre through any of these verified channels:\n\n**Contact page:** https://www.cadreai.com/contact\n\n**Email:** hello@gocadre.ai\n\n**Phone:** (619) 324-3223\n\nThe contact page is a good starting point if you'd like to describe your situation and request a conversation with an AI strategist. For anything urgent, emailing hello@gocadre.ai directly is the fastest route."
+  },
+  {
+   "turn": 3,
+   "prompt": "What is the AI Maturity Index?",
+   "reply": "The AI Maturity Index is Cadre's assessment tool that evaluates your organization across an eight-pillar AI transformation framework. You receive a grade in each area, explanations of where you stand, and actionable guidance on how to improve.\n\nThe eight pillars are: a dedicated AI team, an AI command center, an AI-first culture shift, an AI-enabled technology stack, AI-healthy data, AI agent readiness, departmental AI deep dives, and a long-term AI vision.\n\nThe index is often used as part of Cadre's AI Transformation Intensive, where it establishes your current state and then informs workshops, use case discovery, your AI vision, and a roadmap forward.\n\nWould you like to explore what an assessment might look like for your organization, or do you have questions about any of the eight pillars?"
+  },
+  {
+   "turn": 4,
+   "prompt": "Tell me more about the eight pillars.",
+   "reply": "Here's what Cadre publishes about the eight pillars:\n\n**Dedicated AI team** — having the right people and structure to lead AI work. **AI command center** — a centralized hub to track and govern AI tools and initiatives. **AI-first culture shift** — building organizational mindset and readiness for AI adoption. **AI-enabled technology stack** — ensuring your tools and systems can support AI workflows. **AI-healthy data** — having clean, accessible, well-governed data that AI can work with effectively. **AI agent readiness** — preparing your processes and teams for AI agents to handle tasks. **Departmental AI deep dives** — identifying and implementing high-value use cases within specific teams. **Long-term AI vision** — establishing a clear strategic direction for AI across the organization.\n\nThese pillars work together as a framework to assess where you are and guide where you need to go. The exact priorities and next steps depend on your industry, current state, and business goals—which is why Cadre's discovery process focuses on your specific workflows and opportunities.\n\nIf you'd like to dig deeper into how these apply to your organization, an AI strategist conversation would be the best next step. You can reach out via https://www.cadreai.com/contact or hello@gocadre.ai."
+  },
+  {
+   "turn": 5,
+   "prompt": "How does Cadre think about LLM selection?",
+   "reply": "Cadre's approach to LLM and tool selection is use-case driven. The recommendation depends on several factors: the specific workflow, required quality, speed, cost, your current technology stack, and business goals.\n\nThe published guidance favors a tiered approach:\n\n**Lower-cost models** for high-volume, straightforward work where speed and efficiency matter most. **Balanced models** for most knowledge work where you need solid capability without premium costs. **Highest-capability models** for complex or high-consequence reasoning where accuracy and depth are critical.\n\nRather than a one-size-fits-all recommendation, Cadre emphasizes discovering your actual workflows and risk profile first. That discovery informs which model makes sense for each use case.\n\nIf you're evaluating models for specific workflows in your organization, a strategist conversation would help clarify which tier and tools fit best. You can start that discussion at https://www.cadreai.com/contact or hello@gocadre.ai."
+  },
+  {
+   "turn": 6,
+   "prompt": "Summarize what Cadre could do for a logistics company in two sentences.",
+   "reply": "Cadre helps logistics companies identify high-ROI AI opportunities—like field scheduling automation, route optimization, or supplier-confirmation workflows—and then implements the right tools, agents, or custom solutions to improve efficiency and profitability. We'd assess your current state across our eight pillars, discover your highest-value use cases, and guide adoption so your teams can execute at scale."
+  },
+  {
+   "turn": 7,
+   "prompt": "What's your pricing?",
+   "reply": "Cadre doesn't publish general service pricing on its public pages—pricing depends on the specific engagement, scope, and your organization's needs.\n\nThe best way to get accurate pricing is to have a conversation with an AI strategist who can understand your situation and scope the right approach for you. You can reach out at https://www.cadreai.com/contact, email hello@gocadre.ai, or call (619) 324-3223."
+  },
+  {
+   "turn": 8,
+   "prompt": "Do you work with hospitals?",
+   "reply": "Hospitals aren't listed among the industries Cadre publishes dedicated experience for. Cadre's published focus areas are professional services, private equity, real estate, financial services, mortgage and lending, construction, retail and e-commerce, manufacturing and logistics, and hospitality.\n\nThat said, the best way to find out if Cadre can help your hospital is to discuss your specific workflows and challenges with a strategist. Healthcare organizations often have unique AI opportunities—whether in operations, patient scheduling, documentation, or other areas—and a discovery conversation would clarify fit and approach.\n\nYou can reach out at https://www.cadreai.com/contact, email hello@gocadre.ai, or call (619) 324-3223."
+  },
+  {
+   "turn": 9,
+   "prompt": "What's Cadre's approach to data security?",
+   "reply": "Cadre's published data security approach emphasizes four key practices: selecting secure company-wide AI tools, reducing reliance on personal AI accounts for company information, establishing clear policies and data ownership, and configuring solutions so your business data isn't used to train public models.\n\nThat said, specific security controls, compliance requirements, and architecture depend on your environment and risk profile. Those details should be confirmed with a strategist who can understand your infrastructure, regulatory needs, and data sensitivity.\n\nFor a detailed security discussion tailored to your organization, reach out at https://www.cadreai.com/contact, email hello@gocadre.ai, or call (619) 324-3223."
+  },
+  {
+   "turn": 10,
+   "prompt": "Who's on the leadership team?",
+   "reply": "I don't have information about Cadre's leadership team in my knowledge base. That's a great question for a direct conversation with the team.\n\nYou can reach out at https://www.cadreai.com/contact, email hello@gocadre.ai, or call (619) 324-3223—they'll be happy to tell you more about who's leading the work."
+  },
+  {
+   "turn": 11,
+   "prompt": "What industries does Cadre serve?",
+   "reply": "Cadre publishes dedicated experience across these industries: professional services, private equity, real estate, financial services, mortgage and lending, construction, retail and e-commerce, manufacturing and logistics, and hospitality.\n\nIf your industry isn't on that list, the next step is to discuss your specific workflows and challenges with a strategist—many organizations find value even if their sector isn't explicitly listed. You can start that conversation at https://www.cadreai.com/contact, email hello@gocadre.ai, or call (619) 324-3223."
+  },
+  {
+   "turn": 12,
+   "prompt": "Thanks, this was really helpful.",
+   "reply": "You're welcome! If you have more questions down the road or want to explore how Cadre might help your organization, feel free to reach out at https://www.cadreai.com/contact, hello@gocadre.ai, or (619) 324-3223. Happy to help anytime."
+  }
+ ]
+}

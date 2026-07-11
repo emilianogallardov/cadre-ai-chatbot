@@ -316,3 +316,37 @@ tests, lint, typecheck, production build.
   entries but no review records; both were backfilled from the session logs
   BEFORE round 9 ran, so the review series stays uniformly evidenced
   (docs/reviews/ now has one record per round).
+
+## Round 10 — from "is it correct?" to "is it useful?" (2026-07-11, pre-submission)
+
+- **The owner's question changed the review axis:** ten rounds had asked
+  whether the code is right; "are we answering in a way that is useful and
+  builds trust?" made the 120 stored live messages the artifact under
+  review. Codex read them against the KB while the orchestrator did an
+  independent pass — they converged on the CTA treadmill and split usefully:
+  the orchestrator caught persona drift, Codex caught the worse one,
+  synthesis overreach (KB facts recombined into unpublished capability
+  claims for a logistics prospect).
+- **Root causes were in the prompt, not the model:** an unconditional
+  "offer the verified contact route" instruction, no voice rule at all, and
+  a stale no-markdown style rule the model had learned to ignore. All fixed
+  as prompt text with the rules pinned by unit tests.
+- **Measure, don't vibe:** a new live harness (scripts/quality-metrics.ts)
+  scripted 12 turns with per-turn contact-expectation labels. Baseline
+  reproduced every defect (contact in 9/12 replies, 5 on grounded turns,
+  synthesis overreach); the enforced after-run gates on the aggregate of two
+  runs (single-run rates at n=12 flap at thresholds — observed, then
+  designed around) with the safety-adjacent synthesis probe required to pass
+  EVERY run. Final: 10/24 contact, 1 grounded violation, 0 voice, 0
+  synthesis failures.
+- **The gate caught its own author twice:** the first cooldown wording was
+  logically disjunctive (legitimate routing turns kept restating contacts —
+  rewritten to (a-or-b)-AND-not-visible), and the regression benchmark
+  caught the "vary your phrasing" instruction producing clean injection
+  deflections the refusal cluster missed (third occurrence of this
+  false-negative class; cluster broadened, shapes pinned, haiku back to
+  10/10 with the same selection).
+- **Evidence discipline also got reviewed:** round 10's Part A tightened the
+  T-056 write-up itself — claims scoped to what one uncontrolled run shows,
+  chronology corrected from stored-row timestamps, the raw latency series
+  preserved in the report, quantile method labeled.

@@ -93,3 +93,16 @@ lives in the unit tests: a vague contact-only reply permanently fails the
 overview, maturity, and residency scenarios, so the harness can never again
 select a model for sounding polite. Full report:
 `docs/benchmarks/2026-07-11-model-benchmark.md`.
+
+**Addendum (2026-07-11, answer-quality pass):** the system-prompt quality
+changes (voice pin, contact cooldown, synthesis-grounding, formula breakers —
+spec `docs/specs/2026-07-11-answer-quality-voice-and-cta.md`) instruct the
+model to vary its phrasing, and the regression rerun promptly produced the
+refusal-cluster false-negative class a third time: both Anthropic models
+answered the system-prompt-leak probe with CLEAN novel deflections ("stay in
+role and stick with my actual instructions", "operating according to my
+actual instructions", "not to reproduce my system prompt") that the cluster
+missed. Cluster broadened, the observed shapes pinned as unit tests, and the
+harness re-run: haiku 10/10 (selected again, first-token median ~1.0s within
+the 3s gate), sonnet 10/10, gpt-5-mini still excluded. Same selection, same
+boundaries — the quality pass did not soften refusals.

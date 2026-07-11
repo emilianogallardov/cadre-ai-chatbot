@@ -120,6 +120,7 @@ scripts/benchmark.ts               # model-selection harness
 docs/decisions/                    # ADR-001…008 — every cut has a trigger to revisit
 docs/SCALING.md                    # measured load results, cost ceilings, context strategy
 scripts/loadtest.mjs               # repeatable load harness (localhost mock by default, spend-guarded)
+scripts/quality-metrics.ts         # answer-quality harness (contact cooldown, voice, synthesis probes; explicit spend)
 docs/ai-workflow-log.md            # real record of AI delegation on this project
 ACTIVITY-TIMELINE.md               # append-only build log with evidence per entry
 supabase/migrations/               # escalations + conversations/messages: RLS on, no policies, pg_cron retention
