@@ -88,7 +88,9 @@ export function Composer({
         maxLength={LIMITS.maxMessageChars}
         placeholder="Ask about Cadre AI…"
         autoComplete="off"
-        className="min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-inset"
+        // text-base below sm: iOS Safari auto-zooms the page when a focused
+        // input's font-size is under 16px, which wrecks the fixed dock layout.
+        className="min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-2.5 text-base outline-none placeholder:text-zinc-500 sm:text-sm dark:placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-inset"
       />
       {speech.supported && (
         <button

@@ -23,6 +23,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  /* The chat is full of custom-styled controls; iOS's grey tap flash reads
+     as jank on them. Focus/active styles carry the feedback instead. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Restrained tonal field behind the app: a barely-there radial highlight and
@@ -68,10 +71,13 @@ body {
   }
 }
 
-/* Thin, unobtrusive transcript scrollbar (sits at the window edge). */
+/* Thin, unobtrusive transcript scrollbar (sits at the window edge).
+   overscroll containment keeps iOS rubber-banding inside the transcript
+   instead of triggering pull-to-refresh mid-conversation. */
 .chat-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgb(161 161 170 / 0.4) transparent;
+  overscroll-behavior-y: contain;
 }
 .chat-scroll::-webkit-scrollbar {
   width: 8px;
@@ -186,13 +192,18 @@ body {
 }
 
 /* WCAG touch-target floor: on coarse pointers every chat control hits 44px
-   without changing the compact desktop chrome. */
-@media (pointer: coarse) {
-  .ui-lift,
-  .tap-target,
-  header button,
-  form button {
-    min-height: 44px;
-    min-width: 44px;
+   without changing the compact desktop chrome. Lives in the components layer
+   so an explicit min-width/min-height utility on a control still wins — unlayered,
+   this floor silently overrode the suggested-prompt cards' min-w-[15rem] on
+   touch devices and crushed the rail into four squished columns. */
+@layer components {
+  @media (pointer: coarse) {
+    .ui-lift,
+    .tap-target,
+    header button,
+    form button {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 }

@@ -115,8 +115,10 @@ type Phase =
 const cardFrame =
   "relative mt-4 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/85 p-4 shadow-[0_14px_34px_-22px_rgba(0,0,0,0.6)] ring-1 ring-black/[0.025] sm:p-5 dark:border-zinc-800 dark:bg-zinc-900/85 dark:ring-white/[0.05]";
 
+// text-base below sm: iOS Safari auto-zooms the page when a focused input's
+// font-size is under 16px.
 const fieldClass =
-  "mt-1.5 w-full rounded-xl border border-zinc-300/80 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-[inset_0_1px_0_rgba(0,0,0,0.03)] outline-none transition-[border-color,box-shadow] focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "mt-1.5 w-full rounded-xl border border-zinc-300/80 bg-white px-3 py-2.5 text-base text-zinc-900 shadow-[inset_0_1px_0_rgba(0,0,0,0.03)] outline-none transition-[border-color,box-shadow] focus:border-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 disabled:opacity-60 sm:text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 const labelClass =
   "block text-xs font-medium text-zinc-600 dark:text-zinc-400";

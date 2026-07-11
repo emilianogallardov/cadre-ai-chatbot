@@ -304,7 +304,9 @@ export function Chat() {
             >
               C
             </span>
-            <div className="min-w-0 max-[430px]:sr-only">
+            {/* 400px: current iPhones (402pt) keep the brand lockup; only the
+                narrowest phones drop to monogram + controls. */}
+            <div className="min-w-0 max-[399px]:sr-only">
               <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
                 Cadre AI
               </p>
