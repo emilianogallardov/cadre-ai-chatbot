@@ -108,3 +108,26 @@ Cadre wants analytics dashboards or redacted transcript review tooling; a
 data-subject request arrives that the manual contact path cannot serve; or
 the bot starts handling account-specific data (which would trigger ADR-002's
 auth half as well).
+
+## Amendment 2026-07-11 (notice placement)
+
+Requirement 2 originally specified a *persistent* line under the composer. In
+the mobile rework the disclosure was scoped to the first-run screen
+(`items.length === 0`) and hidden while the on-screen keyboard is up, because a
+persistent composer line collided with the keyboard on small viewports. The
+obligation is preserved: the notice is shown on the first-run screen — the
+at-or-before-collection moment, since collection begins with the first sent
+message — and the Privacy link plus the Private-mode toggle remain persistent
+in the header for the whole session; every New chat returns to that first-run
+screen. Recorded here because AGENTS.md requires an ADR amendment before a
+privacy artifact is scoped.
+
+## Amendment 2026-07-11 (New chat keeps the deletion handle)
+
+"New chat" clears the visible transcript and the model context but deliberately
+**keeps** the conversation's signed token, so the Delete control can still
+reach the stored record. An earlier version dropped the token to mint a fresh
+server conversation, which stranded the prior conversation with no client-side
+delete handle — a break of the self-service deletion contract above. The stored
+record now continues under the same id (a longer transcript is acceptable) and
+stays deletable.

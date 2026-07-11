@@ -69,7 +69,7 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 26 files, 295/295 tests, lint, typecheck, production build ✅ (2026-07-11, post round 10 — count grew 287→292→295 across the round-9/10 fixes)
+- `npm run verify`: 25 files, 307/307 tests, lint, typecheck, production build ✅ (2026-07-11, post round 12 — count moved 287→295→299→307 across rounds 9–12; file count dropped to 25 when read-aloud/speech-output was removed in T-068)
 - Session + scale hardening (round 6, owner-directed): the session wall fixed
   (rolling window valid by construction; 50-exchange endurance tests through
   the real route), spend-guarded load harness + docs/SCALING.md with measured

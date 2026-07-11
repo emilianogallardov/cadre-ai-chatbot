@@ -103,8 +103,11 @@ export function useSpeechInput(): SpeechInput {
   const keepAliveRef = useRef(false);
   const deadlineRef = useRef(0);
 
-  // Hard cap on one tap's listening session — a forgotten open mic should
-  // close itself even though the pulsing button shows the live state.
+  // Cap on one tap's listening session, enforced at each restart boundary: the
+  // deadline is checked in onend (below), and recognition engines end on a few
+  // seconds of silence, so a forgotten/idle mic refuses its next restart and
+  // closes within seconds of SESSION_MS. It is not a wall-clock interrupt of a
+  // continuously-voiced stream (a rare edge); text stays the canonical path.
   const SESSION_MS = 120_000;
 
   const stop = useCallback(() => {

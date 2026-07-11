@@ -35,3 +35,13 @@ MVP. Hide or disable unsupported controls without degrading chat.
 
 Voice becomes a required production channel or cross-browser recognition is a
 hard requirement.
+
+## Amendment 2026-07-11 (microphone-only)
+
+The Decision named voice input *and output*. Opt-in read-aloud (speech
+synthesis) was removed 2026-07-11 (timeline T-068): on iOS it never played
+audibly (silent-switch / no autoplay grant) and added little next to native
+screen readers. Progressive voice is now **microphone input only** —
+feature-detected speech-to-text that fills the composer and never auto-sends;
+text stays fully functional when the mic is unavailable. Output may return if
+it becomes reliable cross-platform.

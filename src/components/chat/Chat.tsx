@@ -279,15 +279,17 @@ export function Chat() {
     abortRef.current?.abort();
   }, []);
 
-  // Fresh start: clears the on-screen transcript and drops the conversation
-  // token so the next turn mints a NEW server-side conversation. The old
-  // conversation stays stored per the collection notice (this is not the
-  // Delete control) — but since the token is its only client-side handle,
-  // Delete for the old chat is no longer reachable after this.
+  // Fresh start for the visitor: clears the on-screen transcript and the model
+  // context (the next turn sends no prior messages, so the model sees a clean
+  // slate). It deliberately KEEPS the conversation token: dropping it would
+  // strand the stored conversation with no client-side handle, so the Delete
+  // control could no longer reach it — a break of the ADR-008 self-service
+  // deletion contract. The stored record continues under the same id (a longer
+  // transcript is fine); Delete still removes it, and any escalation lead keeps
+  // its context. This is a fresh SCREEN, not an orphaned server conversation.
   const newChat = useCallback(() => {
     if (deleting) return;
     abortRef.current?.abort();
-    clearConversationToken();
     pendingTurnRef.current = null;
     setItems([]);
     setErrorText(null);

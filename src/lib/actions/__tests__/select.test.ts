@@ -162,6 +162,48 @@ describe("selectActionCards", () => {
     expect(kinds).toContain("escalation");
   });
 
+  it.each([
+    ["Do you offer follow-up support?", "Yes, Cadre supports ongoing engagements."],
+    ["Do you have someone with healthcare expertise?", "Cadre publishes healthcare-adjacent experience."],
+  ])(
+    "does NOT escalate on informational questions that merely contain trigger words: %j",
+    (userText, assistantText) => {
+      // False positives caught by round-12 review: bare "follow up" / "have
+      // someone" wrongly grew a form. Contact-direction anchoring removes them.
+      expect(selectActionCards(userText, assistantText)).toEqual([]);
+    },
+  );
+
+  it.each([
+    "Clients fill out your discovery questionnaire during onboarding.",
+    "Submit the request through the contact page for account help.",
+  ])(
+    "does NOT treat non-form assistant phrasing as a form mention: %j",
+    (assistantText) => {
+      // FORM_MENTION is anchored on the noun "form"; "fill out your
+      // questionnaire" and "submit the request" must stay cardless.
+      expect(selectActionCards("what's your onboarding process?", assistantText)).toEqual([]);
+    },
+  );
+
+  it.each([
+    "Could somebody from Cadre call me?",
+    "Please ask the team to get in touch with me",
+  ])("catches indirect contact requests: %j", (userText) => {
+    expect(
+      selectActionCards(userText, "Happy to arrange that.").map((c) => c.kind),
+    ).toContain("escalation");
+  });
+
+  it.each([
+    "Complete this form to reach the team.",
+    "The follow-up form is displayed below.",
+  ])("renders the form on any way the assistant names it: %j", (assistantText) => {
+    expect(
+      selectActionCards("what next?", assistantText).map((c) => c.kind),
+    ).toContain("escalation");
+  });
+
   it("prefers an informational card over escalation", () => {
     // Assistant text carries an escalation signal, but the user asked for
     // something informational — the informational card wins and no escalation

@@ -66,25 +66,37 @@ const ESCALATION_SIGNAL =
   /\b(don't have|do not have|can't|cannot|not able|no information|not published|not something i|outside)\b/i;
 
 /**
- * The visitor explicitly asks to be contacted / followed up with. This is the
- * clearest possible escalation signal and — unlike ESCALATION_SIGNAL — it is
- * read off the USER's text, so it fires even when the model answers
- * confidently (the "Can I have someone follow up with me" turn matched no
- * informational intent AND drew a confident answer, so no card appeared).
+ * The visitor explicitly asks to be contacted / followed up with. Read off the
+ * USER's text, so it fires even when the model answers confidently (the "Can I
+ * have someone follow up with me" turn matched no informational intent AND drew
+ * a confident answer, so no card appeared).
+ *
+ * Every branch requires the contact be directed AT the visitor — "…me/us" or
+ * "someone/the team … contact/reach/call". This is deliberate: bare "follow up"
+ * or "have someone" matched informational questions ("Do you offer follow-up
+ * support?", "Do you have someone with healthcare expertise?") and wrongly grew
+ * a form. Contact-direction anchoring removes those false positives while still
+ * catching indirect phrasings ("Could somebody from Cadre call me?", "ask the
+ * team to get in touch with me").
  */
 const ESCALATION_REQUEST =
-  /\b(follow[ -]?up|get back to me|(contact|reach|email|message) me|have someone|be in touch|hear back|connect me (to|with))\b/i;
+  /\b((follow[ -]?up|get back|check in|get in touch) with (me|us)\b|(contact|reach|call|email|message|text) me\b|reach out to me\b|be in touch\b|hear back\b|connect me (to|with)\b|(someone|somebody|anyone|a strategist|the team|your team|cadre)\b[^.?!]{0,40}\b(contact|reach|call|email|follow up|get (in touch|back)|be in touch)\b)/i;
 
 /**
  * The assistant's answer references the on-screen follow-up form. Mentioning
  * the form is a promise the UI must keep: if the bot says "fill in the form
  * below", the form has to be there. Detecting the mention and rendering the
  * card closes the exact defect where the bot pointed at a form that was not on
- * screen. Targets form/submission phrasing only — NOT the plain contact route
- * ("reach out to a strategist at …"), which stays cardless.
+ * screen.
+ *
+ * Anchored on the noun "form" (plus the unambiguous "consent box") so it catches
+ * any way the model names it — "complete this form", "the follow-up form is
+ * displayed", "request form below" — without firing on the plain contact route
+ * ("reach out to a strategist at …") or on unrelated "fill out your
+ * questionnaire" phrasing, which stay cardless.
  */
 const FORM_MENTION =
-  /\b(follow[- ]?up request form|request form|form (just )?below|below this chat|fill (in|out) your|consent box|submit(ting)? (the|this|your) (form|request))\b/i;
+  /\b(follow[- ]?up (request )?form|request form|this form|the form|a form\b|form (just )?below|below this chat|complete (the|this) form|fill (in|out) (the|this) form|submit (the|this) form|form is (displayed|shown|below|here)|fill (in|out) your (name|email|details)|consent box)\b/i;
 
 const ESCALATION_CARD: ActionCard = {
   kind: "escalation",
