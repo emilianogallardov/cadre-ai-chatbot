@@ -52,6 +52,16 @@ body {
   }
 }
 
+/* While the on-screen keyboard is up, the dock caption yields its row to the
+   shrunken viewport. Composer focus on a coarse pointer IS the keyboard-up
+   signal — modern iOS Safari shrinks innerHeight with the visual viewport,
+   so height deltas can't detect the keyboard reliably. */
+@media (pointer: coarse) {
+  .chat-shell:has(#chat-input:focus) .kb-hide {
+    display: none;
+  }
+}
+
 /* One shared interaction language: a one-pixel lift + press for controls. */
 .ui-lift {
   transition:

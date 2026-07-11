@@ -490,25 +490,31 @@ export function Chat() {
       />
 
       {/* Compact caption, ChatGPT-style: centered, small, tucked under the
-          composer. Same enforced copy — only the presentation is quiet
-          (zinc-500 stays ≥4.5:1 on white per the round-8 contrast pass). */}
-      <p className="mx-auto max-w-md text-center text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">
-        {noticeText(privateMode)}{" "}
-        <a
-          href="/privacy"
-          className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
-        >
-          Privacy
-        </a>{" "}
-        ·{" "}
-        <button
-          type="button"
-          onClick={() => setPrivateMode(!privateMode)}
-          className="tap-target cursor-pointer underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
-        >
-          {privateMode ? "Turn off private mode" : "Turn on private mode"}
-        </button>
-      </p>
+          composer. Shown only on the first-run screen — that is the
+          at-or-before-collection moment the ADR-008 notice exists for (and
+          every New chat returns here) — and it yields while the on-screen
+          keyboard is up (kb-hide). Copy itself is the enforced text; zinc-500
+          stays ≥4.5:1 on white per the round-8 contrast pass. The header's
+          Private toggle remains the persistent in-chat control. */}
+      {items.length === 0 && (
+        <p className="kb-hide mx-auto max-w-md text-center text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">
+          {noticeText(privateMode)}{" "}
+          <a
+            href="/privacy"
+            className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
+          >
+            Privacy
+          </a>{" "}
+          ·{" "}
+          <button
+            type="button"
+            onClick={() => setPrivateMode(!privateMode)}
+            className="tap-target cursor-pointer underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
+          >
+            {privateMode ? "Turn off private mode" : "Turn on private mode"}
+          </button>
+        </p>
+      )}
 
       {/* Non-blocking feedback for delete (and other transient) actions. The
           live region is always present so screen readers announce updates; it
