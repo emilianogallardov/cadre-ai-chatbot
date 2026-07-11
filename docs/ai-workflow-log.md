@@ -276,3 +276,24 @@ tests, lint, typecheck, production build.
   when `.env.local` holds a real key — the tool preflights the target and
   refuses to fan out against anything that doesn't answer with the keyless
   mock, proven functionally in both directions before shipping.
+
+## Rounds 7-8 — grading pass + polish increment review (2026-07-10 late night)
+
+- **A grade is a review artifact too:** round 7 was a fresh full-repo
+  GRADING pass (8.3/10, per-area A-/B+ table) rather than a finding hunt —
+  and its four "would embarrass the author live" residuals were all
+  claims-vs-reality drift, not code bugs: an unrecorded deploy, a three-way
+  spend-story contradiction, a tooltip carrying a promise round 2
+  supposedly removed, and an ADR overclaim. Honest documentation needs the
+  same adversarial loop as code (docs/reviews/2026-07-10-codex-round7-grading-pass.md).
+- **Even the polish increment earned its pass:** round 8 caught a dark-mode
+  contrast regression INSIDE the accessibility fix, two real buttons the
+  new 44px rule missed, and a CI "no secrets" claim that wasn't literally
+  true (GitHub's auto-minted job token, persisted by default). All six
+  findings closed same hour; the loop's value held at the smallest
+  increment size (docs/reviews/2026-07-10-codex-round8-increment-review.md).
+- **External yardstick over self-grading:** the owner's "does it handle
+  everything a deployed chatbot should" was answered by building a
+  researched requirements skill (OWASP LLM Top 10 2025 + WCAG/NN-g
+  baselines) and auditing this bot against it — the remaining opens were
+  operations-tier and are documented as triggers, not silently absent.
