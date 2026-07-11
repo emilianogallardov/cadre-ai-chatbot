@@ -57,16 +57,24 @@ changed two details of this decision:
 2. **Whole-conversation character cap.** Per-message caps alone allowed a
    worst case of ~15k input tokens per request — at 400 requests/day that
    could exceed the budget. `LIMITS.maxTotalChars` (8000) now bounds the whole
-   payload, making the worst-case day roughly $2 at Haiku-class pricing.
-   With the Sonnet-class fallback (ADR-007) taking every worst-case request —
-   the true worst case, at roughly 4× Haiku pricing — a full day still lands
-   around $5–6, and the key's own prepaid credit limit is the hard backstop:
-   OpenRouter stops serving when the metered credit is exhausted, so no
-   configuration error here can overspend the key.
+   payload. Canonical derived ceilings live in docs/SCALING.md §2a (prices
+   cross-checked against the benchmark report): at the 400/day cap the
+   worst case is ~$2.62/day on Haiku and ~$7.86/day if every request took
+   the Sonnet fallback — the latter exceeds a $5 demo credit within a day,
+   which is exactly why the key's own prepaid credit limit is the hard
+   backstop: OpenRouter stops serving when the metered credit is exhausted,
+   so no configuration error here can overspend the key (it can only
+   exhaust the demo budget early, and the 429 copy hands users the verified
+   human contacts).
 
 The same review round added structural transcript validation (strict
-user/assistant alternation ending in a user turn), closing the forged
-assistant-history injection channel at the shape level.
+user/assistant alternation ending in a user turn). Scope honestly stated:
+this rejects malformed SHAPE — it does not prevent a direct API caller from
+submitting a well-formed transcript containing fabricated assistant turns.
+That residual is contained by what fabricated history can actually reach:
+the system prompt and knowledge policy govern answers, action cards are
+deterministic server code, and rendered links are whitelisted — forged
+history can bias prose, not mint side effects.
 
 ## Revisit when
 

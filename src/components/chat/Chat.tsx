@@ -299,7 +299,7 @@ export function Chat() {
             onClick={() => setPrivateMode(!privateMode)}
             aria-label="Private mode"
             aria-pressed={privateMode}
-            title="Private mode — Cadre won't save this chat"
+            title="Private mode — new messages aren't saved"
             className={`ui-lift h-9 cursor-pointer rounded-xl border bg-white/60 px-2.5 text-xs font-medium shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 ${
               privateMode
                 ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"

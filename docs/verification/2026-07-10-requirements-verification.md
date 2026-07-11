@@ -64,7 +64,7 @@ selector deliberately favors offering a human over staying silent).
 |---|---|---|
 | Validation before spend | ✅ | Route order: validate → limit → assemble → provider (T-027/T-028) |
 | Per-IP + global daily caps, fail-closed | ✅ | 112+ tests incl. fail-closed; live: per-IP 429 with Retry-After observed during this regression |
-| Bounded worst case | ✅ | maxTotalChars 8000 + max_tokens 600 → ~$2/day ceiling at 400 req/day (ADR-006) |
+| Bounded worst case | ✅ | maxTotalChars 8000 + max_tokens 600 → derived ceilings at the 400/day cap: ~$2.62 Haiku, ~$7.86 if every request took the Sonnet fallback; the key's prepaid credit is the hard stop (docs/SCALING.md §2a — the canonical math) |
 | Durable limiter store | ⚠️ documented degrade | Upstash env not provisioned; in-memory fallback per instance, warn-once, README-documented. Optional: provision before submission |
 
 ## Quality gates (this session)
