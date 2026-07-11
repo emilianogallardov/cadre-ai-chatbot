@@ -69,7 +69,13 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 23 files, 261/261 tests, lint, typecheck, production build ✅
+- `npm run verify`: 24 files, 273/273 tests, lint, typecheck, production build ✅
+- Session + scale hardening (round 6, owner-directed): the session wall fixed
+  (rolling window valid by construction; 50-exchange endurance tests through
+  the real route), spend-guarded load harness + docs/SCALING.md with measured
+  results — 6,650 zero-error mock-pipeline requests up to 100 concurrency,
+  limiter-correctness burst, controlled live-prod burst
+  (docs/reviews/2026-07-10-codex-round6-scaling-review.md) ✅
 - Cross-review: Codex design round 13/13 accepted; implementation round 8/8
   accepted, all closed; round 3 full-repo review (GPT-5.6 Sol) 14 findings —
   9 fixed, 2 user-gated, 3 deferred
@@ -88,7 +94,7 @@ selector deliberately favors offering a human over staying silent).
   plus intermittent empty completions in earlier runs), and the vacuous-reply
   guarantee enforced permanently in unit tests
   (docs/benchmarks/2026-07-11-model-benchmark.md; ADR-007 addenda) ✅
-- Timeline: append-only through T-050 with evidence per entry ✅
+- Timeline: append-only through T-051 with evidence per entry ✅
 
 ## Independent rubric audit (212-item planning checklist)
 

@@ -65,4 +65,12 @@ export const LIMITS = {
   maxMessages: 30,
   maxMessageChars: 2000,
   maxTotalChars: 8000,
+  /**
+   * Recent-turn window the client sends and the prompt assembler uses — the
+   * single source of truth shared by both so they can never drift (see
+   * MAX_PROMPT_TURNS in lib/prompt/assemble.ts and toPayloadMessages in
+   * lib/chat/payload.ts). The client windows to this BY CONSTRUCTION so a long
+   * session never trips the server caps above.
+   */
+  promptWindowTurns: 12,
 } as const;

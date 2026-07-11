@@ -9,7 +9,7 @@
  * never invent pricing, portal URLs, bookings, certifications, client facts, or
  * guaranteed outcomes.
  */
-import { ChatMessage } from "@/lib/chat/types";
+import { ChatMessage, LIMITS } from "@/lib/chat/types";
 import { knowledgeBase } from "./knowledge";
 
 export interface AssembledPrompt {
@@ -17,8 +17,12 @@ export interface AssembledPrompt {
   messages: ChatMessage[];
 }
 
-/** Recent-turn window sent to the model; older turns are dropped. */
-export const MAX_PROMPT_TURNS = 12;
+/**
+ * Recent-turn window sent to the model; older turns are dropped. Derived from
+ * the shared LIMITS so the client-side payload window and the assembler window
+ * stay identical (the client sends exactly what this uses).
+ */
+export const MAX_PROMPT_TURNS = LIMITS.promptWindowTurns;
 
 const { policy, verified_contacts, entries } = knowledgeBase;
 

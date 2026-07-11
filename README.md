@@ -45,8 +45,10 @@ Browser ── NDJSON stream ── POST /api/chat
   pricing. Under the original checks all three passed and the cost-only rule
   was amended openly with a responsiveness gate (the cheapest model had 5.7s
   median first-token latency); a 2026-07-11 re-run with strengthened
-  substance assertions confirmed the pick — the two Claude models pass 10/10
-  and the cost floor drops out on substance as well as latency
+  substance assertions confirmed the pick — all three models pass the
+  substance bar in the final run, and the cost floor stays excluded by the
+  3s latency gate (5.3s median, with intermittent empty completions in
+  earlier runs)
   ([ADR-007](docs/decisions/ADR-007-model-selection-by-benchmark.md), full
   report in [docs/benchmarks/](docs/benchmarks/)).
 - **Storage with privacy by construction** — conversations are stored
@@ -116,6 +118,8 @@ src/app/privacy/                   # notice-at-collection page (every claim enfo
 src/components/chat/               # UI: transcript, composer, cards, voice hooks
 scripts/benchmark.ts               # model-selection harness
 docs/decisions/                    # ADR-001…008 — every cut has a trigger to revisit
+docs/SCALING.md                    # measured load results, cost ceilings, context strategy
+scripts/loadtest.mjs               # repeatable load harness (localhost mock by default, spend-guarded)
 docs/ai-workflow-log.md            # real record of AI delegation on this project
 ACTIVITY-TIMELINE.md               # append-only build log with evidence per entry
 supabase/migrations/               # escalations + conversations/messages: RLS on, no policies, pg_cron retention

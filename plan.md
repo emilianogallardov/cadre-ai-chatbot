@@ -176,6 +176,15 @@ a documented reason.
 - [x] Post-ADR-008 live regression on prod: 6 scenarios + boundaries +
       privacy self-description + private-mode + common inquiries (T-046,
       docs/verification/2026-07-10-requirements-verification.md)
+- [x] Session-length + scale hardening (owner-directed, 2026-07-10 night):
+      fixed the session wall (client sent the full transcript; normal
+      sessions died on the 8000-char validation cap around turn 10-12 — now
+      a rolling window valid by construction, with a 50-exchange endurance
+      test through the real route), added a spend-guarded load harness
+      (scripts/loadtest.mjs) and docs/SCALING.md with measured results
+      (local mock 25/50/100-concurrency zero-error runs, limiter-correctness
+      burst, controlled live-prod burst), Codex round-6 review loop run to
+      closure (docs/reviews/)
 
 Exit: every privacy claim is enforced in code and the bot describes its own
 practices accurately on the live site.
