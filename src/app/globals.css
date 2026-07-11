@@ -53,12 +53,18 @@ body {
 }
 
 /* While the on-screen keyboard is up, the dock caption yields its row to the
-   shrunken viewport. Composer focus on a coarse pointer IS the keyboard-up
-   signal — modern iOS Safari shrinks innerHeight with the visual viewport,
-   so height deltas can't detect the keyboard reliably. */
+   shrunken viewport and the home-indicator safe-area padding collapses (the
+   keyboard covers that zone, so env(safe-area-inset-bottom) is dead space).
+   Composer focus on a coarse pointer IS the keyboard-up signal — modern iOS
+   Safari shrinks innerHeight with the visual viewport, so height deltas
+   can't detect the keyboard reliably. */
 @media (pointer: coarse) {
   .chat-shell:has(#chat-input:focus) .kb-hide {
     display: none;
+  }
+
+  .chat-shell:has(#chat-input:focus) .dock-pad {
+    padding-bottom: 0.5rem;
   }
 }
 
