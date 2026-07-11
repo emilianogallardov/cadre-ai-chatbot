@@ -115,12 +115,13 @@ Requirement 2 originally specified a *persistent* line under the composer. In
 the mobile rework the disclosure was scoped to the first-run screen
 (`items.length === 0`) and hidden while the on-screen keyboard is up, because a
 persistent composer line collided with the keyboard on small viewports. The
-obligation is preserved: the notice is shown on the first-run screen — the
-at-or-before-collection moment, since collection begins with the first sent
-message — and the Privacy link plus the Private-mode toggle remain persistent
-in the header for the whole session; every New chat returns to that first-run
-screen. Recorded here because AGENTS.md requires an ADR amendment before a
-privacy artifact is scoped.
+obligation is preserved: the notice — with its Privacy link and Private-mode
+link — is shown on the first-run screen, the at-or-before-collection moment
+(collection begins with the first sent message), and the **Private-mode toggle
+remains persistent in the header** for the whole session; every New chat returns
+to that first-run screen, and the `/privacy` page stays reachable at its URL.
+Recorded here because AGENTS.md requires an ADR amendment before a privacy
+artifact is scoped.
 
 ## Amendment 2026-07-11 (New chat keeps the deletion handle)
 

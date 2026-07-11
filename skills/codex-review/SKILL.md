@@ -26,7 +26,7 @@ to, so run it *between* increments, not once at the end.
    focused scope finds what repeated general passes miss.
 
 ## How it was used on this project
-Eleven rounds, one written adjudication each in `docs/reviews/`. The score arc
+A dozen rounds, one written adjudication each in `docs/reviews/`. The score arc
 (6.5 → 8.3/10) and the specific catches are traceable per round. Round 9's
 UI-only lens found a delete/send race that six general passes had missed;
 round 10 shifted the axis from "is it correct?" to "is it useful?" and found a

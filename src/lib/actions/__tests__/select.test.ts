@@ -116,7 +116,7 @@ describe("selectActionCards", () => {
     "please have someone contact me",
     "I'd like someone to get back to me",
     "can you reach me by email",
-    "would love to hear back from your team",
+    "please ask your team to reach out to me",
     "connect me with a strategist please",
   ])("routes explicit follow-up request %j to an escalation card", (userText) => {
     expect(selectActionCards(userText, "Sure — happy to arrange that.")
@@ -203,6 +203,39 @@ describe("selectActionCards", () => {
       selectActionCards("what next?", assistantText).map((c) => c.kind),
     ).toContain("escalation");
   });
+
+  it.each([
+    "Does your team follow up with clients after a project ends?",
+    "Does Cadre email a monthly newsletter?",
+    "Will someone from Cadre call every client weekly?",
+    "Does Cadre contact references during hiring?",
+    "How often will Cadre be in touch during implementation?",
+    "Does someone from Cadre contact outside model providers?",
+  ])(
+    "does NOT escalate on third-party/process questions that name a contact verb: %j",
+    (userText) => {
+      // Round-13 review: the someone/team/cadre branch lacked a me/us anchor and
+      // fired on questions ABOUT Cadre's process. Now requires contact directed
+      // at the visitor. (An informational card from a pre-existing intent word
+      // like "call" is fine — this pins only that no ESCALATION form appears.)
+      expect(
+        selectActionCards(userText, "Yes, that's part of the engagement.").map(
+          (c) => c.kind,
+        ),
+      ).not.toContain("escalation");
+    },
+  );
+
+  it.each([
+    "Cadre delivers value in the form of workshops and pilots.",
+    "The assessment takes the form of a structured conversation.",
+  ])(
+    "does NOT treat the \"in the form of\" idiom as a form mention: %j",
+    (assistantText) => {
+      // Round-13 review: bare "the form" matched the idiom. Guarded with (?! of).
+      expect(selectActionCards("what's your process?", assistantText)).toEqual([]);
+    },
+  );
 
   it("prefers an informational card over escalation", () => {
     // Assistant text carries an escalation signal, but the user asked for

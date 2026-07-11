@@ -80,7 +80,7 @@ const ESCALATION_SIGNAL =
  * team to get in touch with me").
  */
 const ESCALATION_REQUEST =
-  /\b((follow[ -]?up|get back|check in|get in touch) with (me|us)\b|(contact|reach|call|email|message|text) me\b|reach out to me\b|be in touch\b|hear back\b|connect me (to|with)\b|(someone|somebody|anyone|a strategist|the team|your team|cadre)\b[^.?!]{0,40}\b(contact|reach|call|email|follow up|get (in touch|back)|be in touch)\b)/i;
+  /\b((follow[ -]?up|get back|check in|get in touch|be in touch) with (me|us)\b|(contact|reach|call|email|message|text) me\b|reach out to me\b|connect me (to|with)\b|(someone|somebody|anyone|a strategist|the team|your team|cadre)\b[^.?!]{0,40}\b(contact|reach|call|email|follow up|get (in touch|back)|be in touch)\b[^.?!]{0,15}\b(me|us|my)\b)/i;
 
 /**
  * The assistant's answer references the on-screen follow-up form. Mentioning
@@ -96,7 +96,7 @@ const ESCALATION_REQUEST =
  * questionnaire" phrasing, which stay cardless.
  */
 const FORM_MENTION =
-  /\b(follow[- ]?up (request )?form|request form|this form|the form|a form\b|form (just )?below|below this chat|complete (the|this) form|fill (in|out) (the|this) form|submit (the|this) form|form is (displayed|shown|below|here)|fill (in|out) your (name|email|details)|consent box)\b/i;
+  /\b(follow[- ]?up (request )?form|request form|this form(?! of\b)|the form(?! of\b)|a form\b(?! of\b)|form (just )?below|below this chat|complete (the|this) form|fill (in|out) (the|this) form|submit (the|this) form|form is (displayed|shown|below|here)|fill (in|out) your (name|email|details)|consent box)\b/i;
 
 const ESCALATION_CARD: ActionCard = {
   kind: "escalation",

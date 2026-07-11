@@ -13,7 +13,7 @@ several of which this project hit and recovered from in the open.
 
 | Skill | What it does | Evidence in this repo |
 |---|---|---|
-| [codex-review](codex-review/SKILL.md) | Adversarial external review loop (a second model tries to break each increment) | `docs/reviews/` — 11 rounds, one record each |
+| [codex-review](codex-review/SKILL.md) | Adversarial external review loop (a second model tries to break each increment) | `docs/reviews/` — a dozen rounds, one record each |
 | [systematic-debugging](systematic-debugging/SKILL.md) | Four-phase root-cause method: understand before fixing | `docs/reviews/2026-07-11-codex-round10…`, escalation fix (T-070) |
 | [brainstorming](brainstorming/SKILL.md) | Refine a rough idea into a design before writing code | `docs/decisions/ADR-008…`, `docs/specs/2026-07-11-answer-quality…` |
 | [adversarial-verification](adversarial-verification/SKILL.md) | Don't trust a claim until an independent pass tries to refute it | `docs/benchmarks/`, blind-agent audits (T-060, T-062) |

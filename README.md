@@ -172,7 +172,7 @@ Each cut is an ADR with the trigger that would reverse it:
 Claude Code (Fable 5) orchestrated the build: parallel subagents implemented
 modules against pinned interface contracts, the orchestrator independently
 re-verified and committed everything, and an external adversarial reviewer
-(Codex / GPT-5.6) audited each increment's diff across eleven rounds — several
+(Codex / GPT-5.6) audited each increment's diff across a dozen rounds — several
 of its findings changed the design, and a few were declined with recorded
 rationale. This was deliberate methodology, not one-shot generation: the
 repeatable methods used — adversarial review, root-cause debugging,
