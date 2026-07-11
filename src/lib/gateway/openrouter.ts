@@ -2,7 +2,7 @@
  * OpenRouter model gateway.
  *
  * Owns every OpenRouter-specific detail so that swapping models stays a config
- * change (CLAUDE.md architecture rules, ADR-007). The gateway streams text
+ * change (AGENTS.md architecture rules, ADR-007). The gateway streams text
  * deltas only; prompt assembly and request handling live elsewhere.
  *
  * Secrets are read at call time from server-only environment variables and are

@@ -138,7 +138,7 @@ Exit: pricing, booking, portal, and unknown questions all behave safely.
 
 Exit: voice adds value without becoming a dependency.
 
-## Phase 5: Verification and submission (Friday AM)
+## Phase 5: Verification and submission (target Saturday 2026-07-11)
 
 - [x] Scenario regression suite automated (all six + boundary prompts) —
       benchmark harness through the production code path, plus a 9-case live
@@ -147,8 +147,8 @@ Exit: voice adds value without becoming a dependency.
       130/130, T-040)
 - [x] Secret scan: repo history and client bundle (0 hits each, T-040)
 - [x] Live smoke test: six scenarios + boundaries on the deployed URL with the
-      live model (T-040; mobile/clean-browser pass is the remaining manual
-      user step)
+      live model (T-040; mobile layout verified on-device T-061 — the
+      remaining manual user steps are mic/voice and a clean-browser pass)
 - [x] README finalized: setup, env names, architecture, scope cuts,
       limitations (`28d9297`, T-038)
 - [x] Push to fresh GitHub repo; verify reviewer access (public; anonymous

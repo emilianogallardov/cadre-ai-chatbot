@@ -55,8 +55,10 @@ update the ADR or plan first; never silently change scope.
    descriptive messages.
 4. Run targeted tests, then the quality gate, before claiming completion.
 5. Review every diff for secrets, accidental scope, and generated clutter.
-6. Append verified outcomes to the timeline per the protocol; update `plan.md`,
-   ADRs, and the rubric checklist when affected.
+6. Append verified outcomes to the timeline per the protocol; update `plan.md`
+   and ADRs when affected. (The 212-item rubric checklist is an external
+   planning-package artifact, audited once against this repo — see
+   `docs/verification/`; it does not live here.)
 
 Do not report a material task complete until its timeline entry includes
 evidence.
@@ -78,10 +80,10 @@ the phase — do not fake results.)
 ## Architecture rules
 
 - UI components never import provider SDKs or database clients.
-- `lib/gateway/` owns all OpenRouter-specific configuration; swapping models is
-  a config change.
-- Prompt assembly (`lib/prompt/`) is separate from request handling
-  (`app/api/`).
+- `src/lib/gateway/` owns all OpenRouter-specific configuration; swapping
+  models is a config change.
+- Prompt assembly (`src/lib/prompt/`) is separate from request handling
+  (`src/app/api/`).
 - Validation is hand-rolled, typed TypeScript at every route boundary (no
   schema library). Mutations are server-side only: the consented escalation
   lead write, the post-stream conversation write, and the signed-token

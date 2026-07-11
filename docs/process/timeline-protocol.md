@@ -79,7 +79,9 @@ labeled honestly.
 1. Run the relevant verification.
 2. Review changed files and git status.
 3. Append the outcome and evidence.
-4. Update `plan.md`, ADRs, rubric checklist, and open questions if affected.
+4. Update `plan.md`, ADRs, and open questions if affected. (The rubric
+   checklist is the external planning package's artifact, not a file in this
+   repo — see `docs/verification/` for its one-time audit.)
 5. Only then report completion.
 
 ## Phase audit

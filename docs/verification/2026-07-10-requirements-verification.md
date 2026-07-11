@@ -11,8 +11,8 @@ the real model (post-ADR-008 deploy).
 |---|---|---|---|
 | D1 | Publicly deployed working chatbot | ✅ | https://cadre-ai-chatbot.vercel.app — live-model regression this session; GET / 200; /privacy 200 |
 | D2 | Fresh GitHub repository, reviewer-accessible | ✅ | https://github.com/emilianogallardov/cadre-ai-chatbot public; anonymous fetch 200 (T-040) |
-| D3 | Root `CLAUDE.md`, project-specific | ✅ | In repo since root commit `e1d642a`; governs boundaries/workflow/commands |
-| D4 | Root `plan.md` reflecting actual execution | ✅ | Phases 0–4 ticked with commit/timeline evidence; Phase 5 current |
+| D3 | Root `CLAUDE.md`, project-specific | ✅ | In repo since root commit `e1d642a`; since T-059 the content is canonical in `AGENTS.md` (cross-tool standard) with `CLAUDE.md` importing it via `@AGENTS.md` — same instructions, both filenames resolve |
+| D4 | Root `plan.md` reflecting actual execution | ✅ | Phases 0–6 ticked with commit/timeline evidence; sole open box is the Gem submission (user-gated) |
 | D5 | No secrets in repo history or client bundle | ✅ | History scan 0 hits + bundle scan 0 hits (T-040); re-scan scheduled at submission |
 | D6 | README: setup, env names, architecture, scope cuts, limitations | ✅ | README.md `28d9297` + ADR-008 rewrite (T-042) |
 | D7 | Repo URL in Gem Notes; ≥1 business day before review | ⏳ OPEN | User action Saturday (review Tuesday → Saturday submission satisfies the margin) |
@@ -69,7 +69,7 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 26 files, 287/287 tests, lint, typecheck, production build ✅ (2026-07-11, post round 9)
+- `npm run verify`: 26 files, 295/295 tests, lint, typecheck, production build ✅ (2026-07-11, post round 10 — count grew 287→292→295 across the round-9/10 fixes)
 - Session + scale hardening (round 6, owner-directed): the session wall fixed
   (rolling window valid by construction; 50-exchange endurance tests through
   the real route), spend-guarded load harness + docs/SCALING.md with measured
@@ -103,7 +103,10 @@ selector deliberately favors offering a human over staying silent).
   consolidated UI-layer review 11/11 closed — incl. the delete/send-race
   HIGH and markdown image gating
   (docs/reviews/2026-07-11-codex-round9-ui-layer-review.md) ✅
-- Timeline: append-only through T-055 with evidence per entry ✅
+- Timeline: append-only through T-061 with evidence per entry (T-056 live
+  browser test, T-057 answer-quality pass, T-058 fallback failure injection,
+  T-059 AGENTS.md canonicalization, T-060 instruction-discovery audit, T-061
+  mobile rework) ✅
 
 ## Independent rubric audit (212-item planning checklist)
 

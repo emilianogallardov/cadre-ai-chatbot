@@ -33,22 +33,24 @@ Browser ── NDJSON stream ── POST /api/chat
 ```
 
 - **Curated knowledge, not RAG** — the corpus that answers the required
-  scenarios is 14 sourced entries (~3.5KB). It fits in the prompt with room to
-  spare; retrieval would add failure modes to fetch the same corpus every time
+  scenarios is 14 sourced entries (~9.6KB JSON, ~5K characters of answer
+  text). It fits in the prompt with room to spare; retrieval would add
+  failure modes to fetch the same corpus every time
   ([ADR-001](docs/decisions/ADR-001-curated-knowledge-before-rag.md)). The
-  model receives only this layer — it cannot leak facts it was never given.
+  raw site crawl never enters the model's context; answers are constrained
+  to the curated layer by grounding rules that are pinned by unit tests and
+  measured live against the deployed bot (`npm run quality`).
 - **Every gate runs before money is spent** — validation, then the limiter,
   then assembly; only then does the request touch the metered key
   ([ADR-006](docs/decisions/ADR-006-upstash-rate-limiting.md)).
 - **Model chosen by benchmark, not preference** — three candidates, identical
   prompts through the production code path, automated boundary checks, live
-  pricing. Under the original checks all three passed and the cost-only rule
-  was amended openly with a responsiveness gate (the cheapest model had 5.7s
-  median first-token latency); a 2026-07-11 re-run with strengthened
-  substance assertions confirmed the pick — all three models pass the
-  substance bar in the final run, and the cost floor stays excluded by the
-  3s latency gate (5.3s median, with intermittent empty completions in
-  earlier runs)
+  pricing. In the final 2026-07-11 run, Claude Haiku 4.5 (selected) and
+  Claude Sonnet 4.5 (fallback) pass all ten scenarios; GPT-5 Mini fails both
+  the substance bar (5/10) and the 3s first-token latency gate (5.3s median),
+  so the cheapest model was rejected on evidence. The selection rule itself
+  was amended openly along the way — from cost-only to cost-plus-quality-
+  plus-responsiveness — and the correction trail lives in the ADR
   ([ADR-007](docs/decisions/ADR-007-model-selection-by-benchmark.md), full
   report in [docs/benchmarks/](docs/benchmarks/)).
 - **Storage with privacy by construction** — conversations are stored

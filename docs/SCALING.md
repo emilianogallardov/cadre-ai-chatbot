@@ -61,7 +61,7 @@ chars/4, pricing pulled live from the OpenRouter catalog:
 |---|---|---|
 | `anthropic/claude-haiku-4.5` | selected | ~$0.002 ($0.0020–$0.0033 across 10 scenarios) |
 | `anthropic/claude-sonnet-4.5` | fallback | ~$0.0068 ($0.0057–$0.0090) |
-| `openai/gpt-5-mini` | cost floor, excluded on latency | ~$0.0006 |
+| `openai/gpt-5-mini` | cost floor, excluded (5/10 substance + latency gate) | ~$0.0006 |
 
 Two cost numbers matter, derived separately (prices are OpenRouter's live
 catalog values the benchmark recorded: Haiku $1/M input + $5/M output,

@@ -1,7 +1,7 @@
 /**
  * Typed re-export of the curated knowledge base.
  *
- * The prompt assembler is the model's only knowledge source (CLAUDE.md: "The
+ * The prompt assembler is the model's only knowledge source (AGENTS.md: "The
  * model receives only the curated knowledge layer, never raw site crawl"). This
  * module gives that JSON a compile-time shape so assemble.ts stays declarative.
  */
