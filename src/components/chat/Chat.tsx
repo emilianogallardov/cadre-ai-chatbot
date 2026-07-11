@@ -28,9 +28,9 @@ import {
 } from "./conversationStorage";
 import { Composer } from "./Composer";
 import { hasSubmittedEscalation } from "./EscalationCard";
-import { SuggestedPrompts } from "./SuggestedPrompts";
 import { Transcript } from "./Transcript";
 import { useSpeechOutput } from "./useSpeechOutput";
+import { useVisualViewportPin } from "./useVisualViewport";
 
 export interface TranscriptItem {
   message: ChatMessage;
@@ -73,6 +73,9 @@ export function Chat() {
   );
   const [deleting, setDeleting] = useState(false);
   const [announce, setAnnounce] = useState<string | null>(null);
+
+  // Keep the shell sized to the area above the on-screen keyboard (iOS).
+  useVisualViewportPin();
 
   const setPrivateMode = useCallback((on: boolean) => {
     writePrivateMode(on);
@@ -291,10 +294,31 @@ export function Chat() {
     cancelSpeech();
   }, [cancelSpeech]);
 
+  // Fresh start: clears the on-screen transcript and drops the conversation
+  // token so the next turn mints a NEW server-side conversation. The old
+  // conversation stays stored per the collection notice (this is not the
+  // Delete control) — but since the token is its only client-side handle,
+  // Delete for the old chat is no longer reachable after this.
+  const newChat = useCallback(() => {
+    if (deleting) return;
+    abortRef.current?.abort();
+    cancelSpeech();
+    clearConversationToken();
+    pendingTurnRef.current = null;
+    setItems([]);
+    setErrorText(null);
+    setDraft(null);
+    setStatus("idle");
+    setAnnounce("Started a new chat.");
+    document.getElementById("chat-input")?.focus();
+  }, [deleting, cancelSpeech]);
+
   return (
     // Full-bleed shell: the scroll area spans the viewport so the scrollbar
     // sits at the window edge; text stays in a centered readable column.
-    <div className="chat-shell flex h-dvh flex-col">
+    // Height tracks the visual viewport (--vvh) so the dock sits directly on
+    // the on-screen keyboard instead of floating above a dead zone (iOS).
+    <div className="chat-shell flex h-[var(--vvh,100dvh)] flex-col">
       <header className="border-b border-zinc-200/70 bg-white/60 backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-950/60">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -304,9 +328,17 @@ export function Chat() {
             >
               C
             </span>
-            {/* 400px: current iPhones (402pt) keep the brand lockup; only the
-                narrowest phones drop to monogram + controls. */}
-            <div className="min-w-0 max-[399px]:sr-only">
+            {/* Current iPhones (402pt) keep the brand lockup while the control
+                row is short; once a conversation adds New-chat/Delete the
+                controls need the room and the lockup yields on narrow
+                screens (the hero already carries the identity). */}
+            <div
+              className={`min-w-0 ${
+                items.length > 0 || errorText
+                  ? "max-[459px]:sr-only"
+                  : "max-[399px]:sr-only"
+              }`}
+            >
               <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
                 Cadre AI
               </p>
@@ -316,6 +348,34 @@ export function Chat() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+          {(items.length > 0 || errorText) && (
+            <button
+              type="button"
+              onClick={newChat}
+              disabled={deleting}
+              aria-label="New chat"
+              title="Start a new chat"
+              className="ui-lift h-9 cursor-pointer rounded-xl border border-zinc-300 bg-white/60 px-2.5 text-xs font-medium text-zinc-500 shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:bg-zinc-900"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="sm:hidden"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              <span className="hidden sm:inline">New chat</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setPrivateMode(!privateMode)}
@@ -399,21 +459,19 @@ export function Chat() {
         </div>
       </header>
 
-      <Transcript items={items} streaming={status === "streaming"} />
+      <Transcript
+        items={items}
+        streaming={status === "streaming"}
+        onPickPrompt={(text) => {
+          send(text);
+          // The prompt list unmounts on first send; keep keyboard focus on
+          // a live control instead of dropping it (Codex round 9 #6).
+          document.getElementById("chat-input")?.focus();
+        }}
+      />
 
       <div className="border-t border-zinc-200/70 bg-white/80 shadow-[0_-20px_60px_-40px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-950/80">
         <div className="mx-auto w-full max-w-3xl px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3">
-      {items.length === 0 && (
-        <SuggestedPrompts
-          onPick={(text) => {
-            send(text);
-            // The prompt rail unmounts on first send; keep keyboard focus on
-            // a live control instead of dropping it (Codex round 9 #6).
-            document.getElementById("chat-input")?.focus();
-          }}
-        />
-      )}
-
       {errorText && (
         <p
           role="alert"

@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import type { TranscriptItem } from "./Chat";
 import { ActionCardView } from "./ActionCardView";
 import { isNearBottom } from "./stickToBottom";
+import { SuggestedPrompts } from "./SuggestedPrompts";
 import { isVerifiedHref } from "./verifiedLinks";
 
 // Model prose is untrusted: only verified Cadre origins become clickable
@@ -32,14 +33,24 @@ export const markdownComponents: Components = {
 export function Transcript({
   items,
   streaming,
+  onPickPrompt,
 }: {
   items: TranscriptItem[];
   streaming: boolean;
+  /** First-run suggested prompts route their pick through the parent's send. */
+  onPickPrompt: (text: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   // Pin to the bottom only while the user is already there; scrolling up
   // hands control back until they return (or click the pill).
   const stickRef = useRef(true);
+  // Bottom-pinning only makes sense once messages exist — on the first-run
+  // empty state it would scroll the hero's top edge under the header. Synced
+  // via effect (not during render) for the ResizeObserver callback's benefit.
+  const hasItemsRef = useRef(false);
+  useEffect(() => {
+    hasItemsRef.current = items.length > 0;
+  }, [items]);
   // True while a pill-triggered smooth scroll is in flight, so its
   // intermediate scroll events don't read as the user scrolling away.
   const animatingRef = useRef(false);
@@ -66,6 +77,10 @@ export function Transcript({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    if (items.length === 0) {
+      el.scrollTop = 0;
+      return;
+    }
     if (stickRef.current || animatingRef.current) {
       // Instant while pinned: per-token smooth scrolling would lag the stream,
       // and an instant jump is also what reduced-motion users expect.
@@ -74,6 +89,21 @@ export function Transcript({
       setPillVisible(true);
     }
   }, [items]);
+
+  // The container itself resizes when the on-screen keyboard opens/closes or
+  // the device rotates (the shell tracks the visual viewport); a pinned reader
+  // should stay pinned through that, not end up mid-history.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      if (hasItemsRef.current && stickRef.current) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const jumpToLatest = useCallback(() => {
     const el = scrollRef.current;
@@ -113,9 +143,9 @@ export function Transcript({
         aria-busy={streaming}
         aria-label="Conversation"
       >
-        <div className="mx-auto w-full max-w-3xl px-4 py-6">
+        <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-3 sm:py-6">
           {items.length === 0 ? (
-            <div className="mx-auto mt-12 max-w-md text-center sm:mt-20">
+            <div className="mx-auto mt-2 max-w-md text-center sm:mt-16">
               <div
                 aria-hidden="true"
                 className="mx-auto grid size-11 place-items-center rounded-2xl border border-zinc-200 bg-white/80 text-sm font-semibold shadow-[0_10px_30px_-16px_rgba(0,0,0,0.5)] ring-1 ring-black/[0.03] dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/[0.06]"
@@ -132,6 +162,7 @@ export function Transcript({
                 Ask about Cadre&apos;s services, approach, industries, or AI
                 Maturity Index.
               </p>
+              <SuggestedPrompts onPick={onPickPrompt} />
             </div>
           ) : (
             <ul className="flex flex-col gap-6">

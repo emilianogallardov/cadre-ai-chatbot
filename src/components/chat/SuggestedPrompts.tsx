@@ -17,26 +17,31 @@ export function SuggestedPrompts({
   onPick: (text: string) => void;
 }) {
   return (
-    // Horizontal rail on mobile (four long prompts would swallow a 375px
-    // viewport), two-column grid from sm up. The negative margin lets the
-    // rail bleed to the screen edges so a peeking card signals scrollability.
-    <div className="-mx-4 mb-3 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:px-0">
-      {PROMPTS.map((p) => (
-        <button
-          key={p}
-          type="button"
-          onClick={() => onPick(p)}
-          className="ui-lift group flex min-w-[15rem] cursor-pointer snap-start scroll-ml-4 items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-3.5 py-3 text-left text-xs leading-5 text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-white hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 sm:min-w-0 dark:border-zinc-800 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
-        >
-          <span>{p}</span>
-          <span
-            aria-hidden="true"
-            className="text-zinc-400 transition-transform group-hover:translate-x-0.5"
-          >
-            →
-          </span>
-        </button>
-      ))}
+    // Quiet line-item list under the first-run hero (owner rejected the boxy
+    // card grid): hairline dividers, plain text, an arrow that answers hover.
+    <div className="mx-auto mt-7 w-full max-w-md text-left">
+      <p className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
+        Try asking
+      </p>
+      <ul className="mt-2 divide-y divide-zinc-200/70 border-y border-zinc-200/70 dark:divide-zinc-800 dark:border-zinc-800">
+        {PROMPTS.map((p) => (
+          <li key={p}>
+            <button
+              type="button"
+              onClick={() => onPick(p)}
+              className="tap-target group flex w-full cursor-pointer items-center justify-between gap-3 px-1 py-3 text-left text-sm leading-5 text-zinc-600 transition-colors hover:text-zinc-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              <span>{p}</span>
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400"
+              >
+                →
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
