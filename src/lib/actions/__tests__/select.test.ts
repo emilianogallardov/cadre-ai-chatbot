@@ -73,7 +73,7 @@ describe("selectActionCards", () => {
     );
     expect(cards).toHaveLength(1);
     expect(cards[0].kind).toBe("escalation");
-    expect(cards[0].title).toBe("Get a follow-up from Cadre");
+    expect(cards[0].title).toBe("Send your question to Cadre");
     expect(cards[0].url).toBeUndefined();
   });
 

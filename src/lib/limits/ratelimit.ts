@@ -23,8 +23,21 @@ interface Config {
   perIp: number;
   globalPerDay: number;
   escalationsPerIpPerDay: number;
+  deletesPerIpPerDay: number;
   redisUrl?: string;
   redisToken?: string;
+}
+
+/** The two daily per-IP gates share one implementation, keyed by kind. */
+type DailyKind = "escalation" | "delete";
+const DAILY_PREFIX: Record<DailyKind, string> = {
+  escalation: "rl:esc",
+  delete: "rl:del",
+};
+function dailyLimitOf(kind: DailyKind, config: Config): number {
+  return kind === "escalation"
+    ? config.escalationsPerIpPerDay
+    : config.deletesPerIpPerDay;
 }
 
 interface UpstashLimiters {
@@ -36,16 +49,16 @@ interface UpstashLimiters {
 // before the module observes the environment.
 let cachedConfig: Config | null = null;
 let cachedLimiters: UpstashLimiters | null = null;
-// The escalation limiter is a distinct daily-per-IP gate on a different route
-// (ADR-005 spam control), constructed separately from the chat limiters so the
-// chat path's two-gate construction is unchanged.
-let cachedEscalationLimiter: Ratelimit | null = null;
+// The daily-per-IP gates (escalations per ADR-005, deletes per the round-5
+// hardening) are distinct from the chat limiters so the chat path's two-gate
+// construction is unchanged.
+const cachedDailyLimiters = new Map<DailyKind, Ratelimit>();
 
 // In-memory fallback state (local dev only; not durable across instances).
 const ipHits = new Map<string, number[]>();
 let globalCounter: { date: string; count: number } | null = null;
-// Per-IP daily escalation counters, keyed by IP -> { UTC date, count }.
-const escalationHits = new Map<string, { date: string; count: number }>();
+// Per-kind, per-IP daily counters: kind -> IP -> { UTC date, count }.
+const dailyHits = new Map<DailyKind, Map<string, { date: string; count: number }>>();
 let warnedInMemory = false;
 
 function readIntEnv(name: string, fallback: number): number {
@@ -64,6 +77,7 @@ function getConfig(): Config {
       "RATE_LIMIT_ESCALATIONS_PER_IP_PER_DAY",
       3,
     ),
+    deletesPerIpPerDay: readIntEnv("RATE_LIMIT_DELETES_PER_IP_PER_DAY", 20),
     redisUrl: process.env.UPSTASH_REDIS_REST_URL || undefined,
     redisToken: process.env.UPSTASH_REDIS_REST_TOKEN || undefined,
   };
@@ -157,34 +171,54 @@ async function checkUpstash(
 export async function checkEscalationLimit(
   ip: string,
 ): Promise<RateLimitResult> {
-  const config = getConfig();
-  if (config.redisUrl && config.redisToken) {
-    return checkEscalationUpstash(ip, config);
-  }
-  return checkEscalationInMemory(ip, config);
+  return checkDailyIpLimit("escalation", ip);
 }
 
-function getEscalationLimiter(config: Config): Ratelimit {
-  if (cachedEscalationLimiter) return cachedEscalationLimiter;
+/**
+ * Per-IP daily cap on Delete-this-chat calls (round-5 hardening): the signed
+ * token is the authority for WHICH conversation may be deleted, but without a
+ * cap one valid token allows unbounded Supabase request volume. Same
+ * fail-closed, durable-Redis-preferred semantics as the other gates.
+ */
+export async function checkDeleteLimit(ip: string): Promise<RateLimitResult> {
+  return checkDailyIpLimit("delete", ip);
+}
+
+async function checkDailyIpLimit(
+  kind: DailyKind,
+  ip: string,
+): Promise<RateLimitResult> {
+  const config = getConfig();
+  if (config.redisUrl && config.redisToken) {
+    return checkDailyUpstash(kind, ip, config);
+  }
+  return checkDailyInMemory(kind, ip, config);
+}
+
+function getDailyLimiter(kind: DailyKind, config: Config): Ratelimit {
+  const cached = cachedDailyLimiters.get(kind);
+  if (cached) return cached;
   const redis = new Redis({
     url: config.redisUrl!,
     token: config.redisToken!,
   });
-  cachedEscalationLimiter = new Ratelimit({
+  const limiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.fixedWindow(config.escalationsPerIpPerDay, "1 d"),
-    prefix: "rl:esc",
+    limiter: Ratelimit.fixedWindow(dailyLimitOf(kind, config), "1 d"),
+    prefix: DAILY_PREFIX[kind],
     analytics: false,
   });
-  return cachedEscalationLimiter;
+  cachedDailyLimiters.set(kind, limiter);
+  return limiter;
 }
 
-async function checkEscalationUpstash(
+async function checkDailyUpstash(
+  kind: DailyKind,
   ip: string,
   config: Config,
 ): Promise<RateLimitResult> {
   try {
-    const limiter = getEscalationLimiter(config);
+    const limiter = getDailyLimiter(kind, config);
     const result = await limiter.limit(ip);
     if (!result.success) {
       return {
@@ -196,17 +230,21 @@ async function checkEscalationUpstash(
     return { ok: true };
   } catch (error) {
     // FAIL CLOSED, matching the chat limiter: a Redis outage must not open an
-    // unbounded write path to the escalations table. The route renders this as a
-    // friendly typed 429; we log once and never surface the error.
+    // unbounded write path. The route renders this as a friendly typed 429;
+    // we log once and never surface the error.
     console.error(
-      "[ratelimit] Redis error on escalation limit; failing closed",
+      `[ratelimit] Redis error on ${kind} limit; failing closed`,
       error,
     );
     return { ok: false, scope: "ip", retryAfterSeconds: 60 };
   }
 }
 
-function checkEscalationInMemory(ip: string, config: Config): RateLimitResult {
+function checkDailyInMemory(
+  kind: DailyKind,
+  ip: string,
+  config: Config,
+): RateLimitResult {
   if (!warnedInMemory) {
     warnedInMemory = true;
     console.warn(
@@ -217,12 +255,17 @@ function checkEscalationInMemory(ip: string, config: Config): RateLimitResult {
 
   const now = Date.now();
   const today = utcDateKey(now);
-  let entry = escalationHits.get(ip);
+  let perKind = dailyHits.get(kind);
+  if (!perKind) {
+    perKind = new Map();
+    dailyHits.set(kind, perKind);
+  }
+  let entry = perKind.get(ip);
   if (!entry || entry.date !== today) {
     entry = { date: today, count: 0 };
-    escalationHits.set(ip, entry);
+    perKind.set(ip, entry);
   }
-  if (entry.count >= config.escalationsPerIpPerDay) {
+  if (entry.count >= dailyLimitOf(kind, config)) {
     return {
       ok: false,
       scope: "ip",
@@ -292,9 +335,9 @@ function checkInMemory(ip: string, config: Config): RateLimitResult {
 export function resetRateLimiterForTests(): void {
   cachedConfig = null;
   cachedLimiters = null;
-  cachedEscalationLimiter = null;
+  cachedDailyLimiters.clear();
   ipHits.clear();
   globalCounter = null;
-  escalationHits.clear();
+  dailyHits.clear();
   warnedInMemory = false;
 }

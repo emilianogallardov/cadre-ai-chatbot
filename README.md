@@ -42,9 +42,11 @@ Browser ── NDJSON stream ── POST /api/chat
   ([ADR-006](docs/decisions/ADR-006-upstash-rate-limiting.md)).
 - **Model chosen by benchmark, not preference** — three candidates, identical
   prompts through the production code path, automated boundary checks, live
-  pricing. All three passed; the cost-only rule was amended openly with a
-  responsiveness gate when results showed the cheapest model had 5.7s median
-  first-token latency
+  pricing. Under the original checks all three passed and the cost-only rule
+  was amended openly with a responsiveness gate (the cheapest model had 5.7s
+  median first-token latency); a 2026-07-11 re-run with strengthened
+  substance assertions confirmed the pick — the two Claude models pass 10/10
+  and the cost floor drops out on substance as well as latency
   ([ADR-007](docs/decisions/ADR-007-model-selection-by-benchmark.md), full
   report in [docs/benchmarks/](docs/benchmarks/)).
 - **Storage with privacy by construction** — conversations are stored
@@ -72,9 +74,15 @@ cp .env.example .env.local   # fill in what you have; everything degrades
 npm run dev
 ```
 
-With no env at all, the app runs fully: chat serves a labeled mock stream,
-rate limiting uses an in-memory fallback (warn-once), and escalations go to a
-non-durable in-memory store. Each credential you add flips that slice to real:
+With no env at all, the app runs fully in dev/preview: chat serves a labeled
+mock stream, rate limiting uses an in-memory fallback (warn-once), and
+escalations go to a non-durable in-memory store. Production deliberately does
+NOT degrade this way for the model and storage: a keyless production deploy
+answers with a typed 503 and an unconfigured escalation store fails into the
+direct-contact fallback, so a broken deployment can never look healthy. The
+one documented exception is rate limiting, which falls back to per-instance
+memory until the Upstash variables are provisioned (see Known limitations).
+Each credential you add flips that slice to real:
 
 | Variable | Purpose |
 |---|---|
@@ -82,7 +90,7 @@ non-durable in-memory store. Each credential you add flips that slice to real:
 | `OPENROUTER_MODEL` / `OPENROUTER_FALLBACK_MODEL` | Benchmark winner / runner-up (config, not code) |
 | `OPENROUTER_MAX_TOKENS` | Per-turn response cap (bounded worst-case cost) |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Durable rate limiting (serverless instances share no memory) |
-| `RATE_LIMIT_*` | Tunable caps (per-IP/min, global/day, escalations/IP/day) |
+| `RATE_LIMIT_*` | Tunable caps (per-IP/min, global/day, escalations/IP/day, deletes/IP/day) |
 | `SUPABASE_URL` / `SUPABASE_SECRET_KEY` | Durable escalation + conversation storage (server-only; key never reaches the client) |
 | `CONVERSATION_SIGNING_SECRET` | HMAC key for conversation tokens; without it, conversation storage silently disables (ADR-008) |
 
@@ -107,10 +115,10 @@ src/app/api/conversations/         # DELETE — the "Delete this chat" control
 src/app/privacy/                   # notice-at-collection page (every claim enforced)
 src/components/chat/               # UI: transcript, composer, cards, voice hooks
 scripts/benchmark.ts               # model-selection harness
-docs/decisions/                    # ADR-001…007 — every cut has a trigger to revisit
+docs/decisions/                    # ADR-001…008 — every cut has a trigger to revisit
 docs/ai-workflow-log.md            # real record of AI delegation on this project
 ACTIVITY-TIMELINE.md               # append-only build log with evidence per entry
-supabase/migrations/               # escalations table: RLS on, no policies, CHECK constraints
+supabase/migrations/               # escalations + conversations/messages: RLS on, no policies, pg_cron retention
 ```
 
 ## Deliberately out of scope
@@ -127,6 +135,10 @@ Each cut is an ADR with the trigger that would reverse it:
 
 ## Known limitations
 
+- Saved follow-up requests are not pushed to staff — there is no notification
+  pipeline or CRM handoff (out of scope, above), so the team works from the
+  stored table and the UI copy promises only that the request is saved.
+  Production trigger: staff notification on insert.
 - Escalation consent is a checkbox, not a verified-email flow; the per-IP
   daily cap is the spam control. Production trigger: email verification.
 - After the tab closes, an anonymous visitor has no self-service way to

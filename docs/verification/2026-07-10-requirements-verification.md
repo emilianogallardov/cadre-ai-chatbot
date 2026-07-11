@@ -69,19 +69,26 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 22 files, 230/230 tests, lint, typecheck, production build ✅
+- `npm run verify`: 23 files, 261/261 tests, lint, typecheck, production build ✅
 - Cross-review: Codex design round 13/13 accepted; implementation round 8/8
   accepted, all closed; round 3 full-repo review (GPT-5.6 Sol) 14 findings —
   9 fixed, 2 user-gated, 3 deferred
   (docs/reviews/2026-07-10-codex-round3-full-repo-review.md); round 4
-  increment review of the spec'd hardening (route-level tests + benchmark
-  latency gate) — 8/8 closed through a fix-then-confirm loop
-  (docs/reviews/2026-07-10-codex-round4-increment-review.md) ✅
-- Round-3 deferrals #11/#12 since UN-deferred and shipped: the three public
-  routes now have 19 spec-pinned protocol/error/storage tests in the gate,
-  and the ADR-007 latency gate is encoded in a pure, unit-tested selector
-  (docs/specs/) ✅
-- Timeline: append-only through T-049 with evidence per entry ✅
+  increment review — 8/8 closed through a fix-then-confirm loop
+  (docs/reviews/2026-07-10-codex-round4-increment-review.md); round 5
+  full-repo re-review (7.4/10, up from 6.5) — all 8 findings fixed the same
+  night, incl. the gateway EOF HIGH and the benchmark-substance HIGH
+  (docs/reviews/2026-07-10-codex-round5-full-repo-rereview.md) ✅
+- Round-3 deferrals #11/#12 since UN-deferred and shipped: 21 spec-pinned
+  route-level tests in the gate, latency gate encoded in `selectModel`, and
+  discriminating per-scenario assertions — validated by live harness re-runs
+  with two reviewer-caught check corrections in between (Unicode apostrophes;
+  deflection-style refusals): final run has the accepted claude-haiku-4.5
+  pick winning 10/10 at 977ms, gpt-5-mini excluded by the 3s gate (5.3s,
+  plus intermittent empty completions in earlier runs), and the vacuous-reply
+  guarantee enforced permanently in unit tests
+  (docs/benchmarks/2026-07-11-model-benchmark.md; ADR-007 addenda) ✅
+- Timeline: append-only through T-050 with evidence per entry ✅
 
 ## Independent rubric audit (212-item planning checklist)
 

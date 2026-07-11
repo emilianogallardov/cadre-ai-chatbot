@@ -2,7 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { mintConversationToken } from "@/lib/conversations/token";
 import { deleteConversation } from "@/lib/conversations/store";
+import { checkDeleteLimit } from "@/lib/limits/ratelimit";
 import { DELETE } from "../conversations/route";
+
+// Partial mock preserves the module's real export shape; only the seam the
+// route consumes is overridden.
+vi.mock("@/lib/limits/ratelimit", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/limits/ratelimit")>();
+  return {
+    ...actual,
+    checkDeleteLimit: vi.fn(),
+  };
+});
 
 // Only the PostgREST-touching delete is mocked (partial mock keeps the rest
 // of the module's real exports so shape drift stays visible); the token
@@ -35,6 +46,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("CONVERSATION_SIGNING_SECRET", SIGNING_SECRET);
   vi.mocked(deleteConversation).mockResolvedValue(true);
+  vi.mocked(checkDeleteLimit).mockResolvedValue({ ok: true });
 });
 
 afterEach(() => {
@@ -94,5 +106,28 @@ describe("DELETE /api/conversations", () => {
     const res = await DELETE(deleteRequest(JSON.stringify({ token })));
     expect(res.status).toBe(502);
     await expect(res.json()).resolves.toEqual({ ok: false });
+  });
+
+  it("V6: per-IP delete cap returns 429 with Retry-After and no store call", async () => {
+    vi.mocked(checkDeleteLimit).mockResolvedValue({
+      ok: false,
+      scope: "ip",
+      retryAfterSeconds: 3600,
+    });
+    const token = mintConversationToken();
+
+    const res = await DELETE(deleteRequest(JSON.stringify({ token })));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("3600");
+    expect(vi.mocked(deleteConversation)).not.toHaveBeenCalled();
+  });
+
+  it("V7: oversized body answers like malformed input (400) and never verifies", async () => {
+    const big = JSON.stringify({ token: "x".repeat(8192) });
+    const res = await DELETE(deleteRequest(big));
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ ok: false });
+    expect(vi.mocked(checkDeleteLimit)).not.toHaveBeenCalled();
+    expect(vi.mocked(deleteConversation)).not.toHaveBeenCalled();
   });
 });

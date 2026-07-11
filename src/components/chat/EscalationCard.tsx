@@ -200,8 +200,8 @@ export function EscalationCard({ card }: { card: ActionCard }) {
             </p>
             <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
               {phase.referenceId
-                ? `Reference ${phase.referenceId}. A Cadre team member will follow up by email.`
-                : `A Cadre team member will follow up by email. You can also reach us directly at ${CONTACT_EMAIL}.`}
+                ? `Reference ${phase.referenceId}. Your request is saved for Cadre's team — for anything urgent, email ${CONTACT_EMAIL} directly.`
+                : `Your request is saved for Cadre's team — for anything urgent, email ${CONTACT_EMAIL} directly.`}
             </p>
           </div>
         </div>

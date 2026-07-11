@@ -169,6 +169,82 @@ describe("streamChatCompletion", () => {
     await expect(gen.next()).rejects.toThrowError(GatewayError);
   });
 
+  it("throws GatewayError when the stream ends without the [DONE] sentinel", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      sseResponse([delta("truncated "), delta("output")]), // no [DONE]
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const gen = streamChatCompletion({
+      system: "s",
+      messages: [{ role: "user", content: "hi" }],
+    });
+    await expect(gen.next()).resolves.toEqual({
+      value: "truncated ",
+      done: false,
+    });
+    await expect(gen.next()).resolves.toEqual({
+      value: "output",
+      done: false,
+    });
+    await expect(gen.next()).rejects.toThrowError(GatewayError);
+  });
+
+  it("throws GatewayError on a 2xx response without a body", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      collect(
+        streamChatCompletion({
+          system: "s",
+          messages: [{ role: "user", content: "hi" }],
+        }),
+      ),
+    ).rejects.toThrowError(GatewayError);
+  });
+
+  it("maps a provider timeout to GatewayError, not an abort", async () => {
+    const timeoutErr = Object.assign(new Error("The operation timed out."), {
+      name: "TimeoutError",
+    });
+    const fetchMock = vi.fn().mockRejectedValue(timeoutErr);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      collect(
+        streamChatCompletion({
+          system: "s",
+          messages: [{ role: "user", content: "hi" }],
+        }),
+      ),
+    ).rejects.toThrowError(GatewayError);
+  });
+
+  it("propagates a client abort as-is (never GatewayError)", async () => {
+    const abortErr = Object.assign(new Error("aborted"), {
+      name: "AbortError",
+    });
+    const fetchMock = vi.fn().mockRejectedValue(abortErr);
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      collect(
+        streamChatCompletion({
+          system: "s",
+          messages: [{ role: "user", content: "hi" }],
+          signal: controller.signal,
+        }),
+      ),
+    ).rejects.toSatisfy(
+      (e) => (e as Error).name === "AbortError",
+    );
+  });
+
   it("throws GatewayError on an error frame before any output", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       sseResponse(['data: {"error":{"message":"no capacity"}}\n\n']),
@@ -264,7 +340,7 @@ describe("streamChatCompletion", () => {
   it("sends the documented endpoint, headers, and body defaults", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(sseResponse(["data: [DONE]\n\n"]));
+      .mockImplementation(() => Promise.resolve(sseResponse(["data: [DONE]\n\n"])));
     vi.stubGlobal("fetch", fetchMock);
 
     await collect(
@@ -299,7 +375,7 @@ describe("streamChatCompletion", () => {
     vi.stubEnv("OPENROUTER_MODEL", "openai/gpt-5-mini");
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(sseResponse(["data: [DONE]\n\n"]));
+      .mockImplementation(() => Promise.resolve(sseResponse(["data: [DONE]\n\n"])));
     vi.stubGlobal("fetch", fetchMock);
 
     await collect(
@@ -326,7 +402,7 @@ describe("streamChatCompletion", () => {
   it("adds the models fallback array only when configured and not overridden", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(sseResponse(["data: [DONE]\n\n"]));
+      .mockImplementation(() => Promise.resolve(sseResponse(["data: [DONE]\n\n"])));
     vi.stubGlobal("fetch", fetchMock);
 
     const bodyOfCall = (n: number) =>
@@ -363,7 +439,7 @@ describe("streamChatCompletion", () => {
   it("clamps OPENROUTER_MAX_TOKENS and falls back on invalid values", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(sseResponse(["data: [DONE]\n\n"]));
+      .mockImplementation(() => Promise.resolve(sseResponse(["data: [DONE]\n\n"])));
     vi.stubGlobal("fetch", fetchMock);
 
     const maxTokensFor = async (raw: string): Promise<number> => {

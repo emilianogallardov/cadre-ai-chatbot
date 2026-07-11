@@ -17,6 +17,9 @@ const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
 const DEFAULT_MAX_TOKENS = 600;
 const MAX_TOKENS_FLOOR = 1;
 const MAX_TOKENS_CEILING = 2000;
+/** Hard wall-clock cap on one provider call (connect + full stream). A
+ * stalled upstream must become a typed error, not an open function. */
+const PROVIDER_TIMEOUT_MS = 45_000;
 
 /** Provider-layer failure mapped to a user-safe message by the route (ADR). */
 export class GatewayError extends Error {
@@ -75,17 +78,41 @@ export async function* streamChatCompletion(
     temperature: 0.2,
   });
 
-  const response = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://cadre-ai-chatbot.vercel.app",
-      "X-Title": "Cadre AI Support Concierge",
-    },
-    body,
-    signal: opts.signal,
-  });
+  // The timeout signal is combined with the caller's (client-abort) signal;
+  // only a timeout maps to GatewayError — a client abort stays an abort.
+  const timeoutSignal = AbortSignal.timeout(PROVIDER_TIMEOUT_MS);
+  const signal = opts.signal
+    ? AbortSignal.any([opts.signal, timeoutSignal])
+    : timeoutSignal;
+  const asGatewayTimeout = (err: unknown): unknown => {
+    const name = (err as Error)?.name;
+    const timedOut =
+      name === "TimeoutError" ||
+      (timeoutSignal.aborted && !opts.signal?.aborted &&
+        name === "AbortError");
+    return timedOut
+      ? new GatewayError(
+          `OpenRouter request timed out after ${PROVIDER_TIMEOUT_MS}ms.`,
+        )
+      : err;
+  };
+
+  let response: Response;
+  try {
+    response = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://cadre-ai-chatbot.vercel.app",
+        "X-Title": "Cadre AI Support Concierge",
+      },
+      body,
+      signal,
+    });
+  } catch (err) {
+    throw asGatewayTimeout(err);
+  }
 
   if (!response.ok) {
     const detail = await safeReadText(response);
@@ -99,7 +126,10 @@ export async function* streamChatCompletion(
   }
 
   const stream = response.body;
-  if (!stream) return;
+  if (!stream) {
+    // A 2xx with no body is a provider failure, not an empty answer.
+    throw new GatewayError("OpenRouter returned a response without a body.");
+  }
 
   const reader = stream.getReader();
   const decoder = new TextDecoder();
@@ -107,7 +137,13 @@ export async function* streamChatCompletion(
 
   try {
     for (;;) {
-      const { done, value } = await reader.read();
+      let done: boolean;
+      let value: Uint8Array | undefined;
+      try {
+        ({ done, value } = await reader.read());
+      } catch (err) {
+        throw asGatewayTimeout(err);
+      }
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
 
@@ -123,10 +159,14 @@ export async function* streamChatCompletion(
 
     // Flush any trailing line that arrived without a final newline.
     buffer += decoder.decode();
-    if (buffer.length > 0 && !isStreamEnd(buffer)) {
-      const delta = parseSseLine(buffer);
-      if (delta !== null) yield delta;
-    }
+    if (buffer.length > 0 && isStreamEnd(buffer)) return;
+
+    // EOF without the `[DONE]` sentinel is a dropped upstream connection:
+    // treating it as success would hand truncated output to action cards,
+    // storage, and the client's own `done` event.
+    throw new GatewayError(
+      "OpenRouter stream ended before the [DONE] sentinel.",
+    );
   } finally {
     reader.releaseLock();
   }

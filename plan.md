@@ -31,7 +31,7 @@ This file is updated when reality diverges; the append-only history lives in
 - ~~Persistent chat history (ADR-002)~~ — SUPERSEDED 2026-07-10 by ADR-008:
   the owner reversed this cut for escalation-lead context and content-gap
   signal, with the privacy obligations met by construction rather than avoided
-- Vector DB / RAG (ADR-001) — curated corpus is ~12 entries; retrieval adds
+- Vector DB / RAG (ADR-001) — curated corpus is 14 entries; retrieval adds
   latency and failure modes with zero recall benefit at this size
 - Unverified calendar/portal integrations — no public scheduler or login URL
   exists; inventing one would fabricate product surface
@@ -90,8 +90,12 @@ Exit: a working mock chat is live on the public URL — day 1.
 - [x] Streaming with abort/retry; provider errors become typed, friendly states
       (`efa62b8` gateway + `3f29276` route; client stop/retry normalized in `ccd1fa5`)
 - [x] Model benchmark across 3 candidates; record results in ADR-007; select model
-      (`7a43d53`: all 3 passed 10/10; responsiveness gate added openly post-results;
-      selected claude-haiku-4.5, fallback claude-sonnet-4.5)
+      (`7a43d53`: all 3 passed the original leak-only checks 10/10;
+      responsiveness gate added openly post-results; selected claude-haiku-4.5,
+      fallback claude-sonnet-4.5. 2026-07-11 re-run under strengthened
+      substance assertions reconfirmed the pick — both Claude models 10/10,
+      cost floor excluded on substance and latency; ADR-007 addenda +
+      docs/benchmarks/2026-07-11 report)
 
 Exit: factual scenarios pass against the live model within budget caps.
 
@@ -105,9 +109,11 @@ Exit: factual scenarios pass against the live model within budget caps.
       signalled it could not answer)
 - [x] `create_escalation`: consent + validation → Supabase insert (server-only)
       → reference ID; direct-contact fallback on failure (`78c30aa` server write +
-      `31e4ab5` consent-form UI + `8121a6a` hardening. Persistence is code-complete
-      and deployed but runs on an in-memory `MemoryStore` in prod until Supabase
-      env vars are provisioned)
+      `31e4ab5` consent-form UI + `8121a6a` hardening. Prod ran on the
+      in-memory `MemoryStore` until Supabase env vars were provisioned in
+      Phase 6; production now writes durable Supabase rows, and an
+      unconfigured production store fails into the direct-contact fallback
+      instead of faking success)
 - [x] Per-session escalation cap + limiter coverage for the mutating route
       (`31e4ab5`/`8121a6a` sessionStorage cap + `78c30aa`/`8121a6a`
       `checkEscalationLimit` 3/IP/day, fail-closed, checked after validation)

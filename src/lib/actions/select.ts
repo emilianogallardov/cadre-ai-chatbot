@@ -67,8 +67,8 @@ const ESCALATION_SIGNAL =
 
 const ESCALATION_CARD: ActionCard = {
   kind: "escalation",
-  title: "Get a follow-up from Cadre",
-  body: "Leave your name and email and a member of the Cadre team will follow up with you directly.",
+  title: "Send your question to Cadre",
+  body: "Leave your name, email, and question — it goes straight to Cadre's team. For anything urgent, hello@gocadre.ai is the fastest route.",
 };
 
 const MAX_CARDS = 2;

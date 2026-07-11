@@ -112,10 +112,16 @@ export function Chat() {
   // failed to read back) dedups under the unique index instead of duplicating.
   const pendingTurnRef = useRef<{ text: string; turnId: string } | null>(null);
 
+  // Synchronous in-flight guard: `status` is React state and updates only on
+  // rerender, so two sends in the same tick would both pass the status check
+  // and start parallel streams (interleaved transcript, double spend).
+  const inFlightRef = useRef(false);
+
   const send = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || status === "streaming") return;
+      if (!trimmed || status === "streaming" || inFlightRef.current) return;
+      inFlightRef.current = true;
 
       // A new user message supersedes any reply still being read aloud.
       cancelSpeech();
@@ -211,6 +217,7 @@ export function Chat() {
         }
       } finally {
         abortRef.current = null;
+        inFlightRef.current = false;
       }
 
       function handleEvent(event: StreamEvent) {

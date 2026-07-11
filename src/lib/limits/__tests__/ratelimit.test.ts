@@ -46,7 +46,12 @@ vi.mock("@upstash/ratelimit", () => {
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { checkRateLimit, resetRateLimiterForTests } from "../ratelimit";
+import {
+  checkDeleteLimit,
+  checkEscalationLimit,
+  checkRateLimit,
+  resetRateLimiterForTests,
+} from "../ratelimit";
 
 const UPSTASH_ENV = {
   url: "https://example.upstash.io",
@@ -231,5 +236,59 @@ describe("Upstash backend (both env vars present)", () => {
     expect(err).toHaveBeenCalledTimes(1);
     // Construction failed before any limiter ran.
     expect(mockState.limitCalls).toEqual([]);
+  });
+});
+
+describe("daily per-IP delete limiter (real implementation)", () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    resetRateLimiterForTests();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    resetRateLimiterForTests();
+  });
+
+  it("in-memory: blocks call N+1 with scope 'ip' and a same-day Retry-After", async () => {
+    vi.stubEnv("RATE_LIMIT_DELETES_PER_IP_PER_DAY", "2");
+    const ip = "10.9.8.7";
+    expect(await checkDeleteLimit(ip)).toEqual({ ok: true });
+    expect(await checkDeleteLimit(ip)).toEqual({ ok: true });
+    const blocked = await checkDeleteLimit(ip);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.scope).toBe("ip");
+      expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
+      expect(blocked.retryAfterSeconds).toBeLessThanOrEqual(86_400);
+    }
+  });
+
+  it("in-memory: delete and escalation budgets are independent per kind", async () => {
+    vi.stubEnv("RATE_LIMIT_DELETES_PER_IP_PER_DAY", "1");
+    vi.stubEnv("RATE_LIMIT_ESCALATIONS_PER_IP_PER_DAY", "1");
+    const ip = "10.9.8.6";
+    expect(await checkDeleteLimit(ip)).toEqual({ ok: true });
+    // Exhausting the delete budget must not consume the escalation budget.
+    expect((await checkDeleteLimit(ip)).ok).toBe(false);
+    expect(await checkEscalationLimit(ip)).toEqual({ ok: true });
+  });
+
+  it("Upstash: uses the rl:del prefix and fails closed on Redis errors", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", UPSTASH_ENV.url);
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", UPSTASH_ENV.token);
+    mockState.limitCalls.length = 0;
+    // The shared mock routes non-"rl:ip" prefixes through mockState.global.
+    mockState.global = { success: true, reset: 0, throws: false };
+    expect(await checkDeleteLimit("2.2.2.2")).toEqual({ ok: true });
+    expect(mockState.limitCalls.map((c) => c.prefix)).toContain("rl:del");
+
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockState.global = { success: true, reset: 0, throws: true };
+    const blocked = await checkDeleteLimit("2.2.2.2");
+    expect(blocked).toEqual({ ok: false, scope: "ip", retryAfterSeconds: 60 });
+    expect(err).toHaveBeenCalled();
   });
 });

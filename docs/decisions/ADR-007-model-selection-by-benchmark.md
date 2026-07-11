@@ -74,3 +74,22 @@ first-token latency gate lives in `src/lib/benchmark/selection.ts` (pure,
 unit-tested `selectModel`) and drives both the report and console selection in
 `scripts/benchmark.ts`, so re-running `npm run benchmark` reproduces the
 `claude-haiku-4.5` pick above instead of the cost-only `gpt-5-mini` floor.
+
+**Addendum (2026-07-11):** replaced the leak-only scenario checks with
+discriminating assertions (published-fact `mustMatch`, invention
+`mustNotMatch`, deterministic-card expectations — Codex round-5 finding #2,
+spec in `docs/specs/`) and re-ran the harness live three times, correcting
+the checks themselves between runs when review showed them unfair: the first
+run's ASCII-only apostrophe regexes failed substantively correct `can’t`
+refusals (caught by the Codex confirmation pass → Unicode normalization),
+and the second run failed a legitimate role-persistence deflection to the
+injection probe (→ refusal cluster broadened). Final run: all three models
+pass 10/10 on substance; `openai/gpt-5-mini` is excluded by the 3s
+first-token gate (5.3s median) and also produced intermittent empty
+completions in earlier runs (reasoning-token burn inside the 600-token cap —
+a real operational risk for a support bot); **`claude-haiku-4.5` wins at
+977ms**, `claude-sonnet-4.5` remains the fallback. The enforced guarantee
+lives in the unit tests: a vague contact-only reply permanently fails the
+overview, maturity, and residency scenarios, so the harness can never again
+select a model for sounding polite. Full report:
+`docs/benchmarks/2026-07-11-model-benchmark.md`.
