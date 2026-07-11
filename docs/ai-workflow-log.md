@@ -256,3 +256,23 @@ tests, lint, typecheck, production build.
   verification. After fixes, a confirmation pass verified each finding
   individually CLOSED (one comment-numbering nit surfaced and fixed) —
   the loop ended at accept, not at "probably fine".
+
+## Round 6 — the owner's product questions beat adversarial review (2026-07-10 night)
+
+- **"How long can a session run?" found a HIGH five review rounds missed:**
+  reviewers (and tests) checked requests; nobody checked a session's
+  evolution. The client re-sent the whole transcript every turn into a
+  server that caps total chars — normal conversations died around turn
+  10-12. The fix inverts the contract: the client sends a rolling window
+  that is valid by construction, pinned by an invariant test and a
+  50-exchange endurance test through the real route.
+- **Measurement over assertion:** a spend-guarded, dependency-free load
+  harness plus docs/SCALING.md, with every cost figure derived from the
+  benchmark report's own recorded prices (cross-checked to six decimals)
+  and every load number from actual runs — including one where the
+  reviewer's confirmation pass caught our fix to its own finding being
+  incomplete (a `done` event could mask an earlier `error`).
+- **Spend safety as a first-class tool feature:** "localhost" is not "free"
+  when `.env.local` holds a real key — the tool preflights the target and
+  refuses to fan out against anything that doesn't answer with the keyless
+  mock, proven functionally in both directions before shipping.
