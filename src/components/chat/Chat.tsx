@@ -303,7 +303,7 @@ export function Chat() {
             className={`ui-lift h-9 cursor-pointer rounded-xl border bg-white/60 px-2.5 text-xs font-medium shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 ${
               privateMode
                 ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
-                : "border-zinc-300 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
+                : "border-zinc-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
             }`}
           >
             {privateMode ? "Private" : "Private off"}
@@ -353,7 +353,7 @@ export function Chat() {
               className={`ui-lift grid h-9 w-9 cursor-pointer place-items-center rounded-xl border bg-white/60 shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 ${
                 speechEnabled
                   ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
-                  : "border-zinc-300 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
+                  : "border-zinc-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
               }`}
             >
               <svg

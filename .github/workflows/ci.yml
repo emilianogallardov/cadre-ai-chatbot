@@ -1,0 +1,21 @@
+# Full quality gate on every push/PR. The suite is designed to pass with
+# ZERO environment configuration (keyless mock paths, in-memory fallbacks),
+# so CI needs no secrets — by construction, not by omission.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run verify

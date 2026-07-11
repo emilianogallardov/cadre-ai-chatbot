@@ -80,7 +80,7 @@ export function Composer({
         maxLength={LIMITS.maxMessageChars}
         placeholder="Ask about Cadre AI…"
         autoComplete="off"
-        className="min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-inset"
+        className="min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-inset"
       />
       {speech.supported && (
         <button

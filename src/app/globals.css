@@ -184,3 +184,14 @@ body {
     }
   }
 }
+
+/* WCAG touch-target floor: on coarse pointers every chat control hits 44px
+   without changing the compact desktop chrome. */
+@media (pointer: coarse) {
+  .ui-lift,
+  header button,
+  form button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

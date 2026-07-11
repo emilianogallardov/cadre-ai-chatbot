@@ -151,6 +151,13 @@ Each cut is an ADR with the trigger that would reverse it:
   documented production step (ADR-008).
 - The privacy-policy text demonstrates the engineering of compliance; in
   production it gets legal review before shipping.
+- English-only: the knowledge base, prompts, and UI copy are English; a
+  non-English question gets a best-effort model reply grounded in the same
+  English corpus. Production trigger: localized KB + language detection.
+- No user-feedback affordance (thumbs up/down) yet — adding one is new data
+  collection, so it ships together with its privacy-page/KB update per this
+  repo's storage rule. Production trigger: first content-quality review
+  cycle.
 - Web Speech recognition quality is engine-dependent (Chrome-first by design;
   all controls vanish elsewhere).
 - `npm audit` reports 2 moderate advisories in the Next.js toolchain whose fix
