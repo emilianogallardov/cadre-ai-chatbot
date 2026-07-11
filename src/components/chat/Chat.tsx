@@ -91,12 +91,19 @@ export function Chat() {
         body: JSON.stringify({ token }),
       });
       if (deleteSucceeded(await res.json())) {
-        // Only the server copy is deleted; the on-screen transcript stays so the
-        // visitor can keep reading it.
+        // Delete removes the stored record AND clears the screen, returning the
+        // visitor to a fresh chat — "delete" should leave nothing behind, and a
+        // transcript that lingered after deletion read as "nothing happened".
+        // (Contrast New chat, which clears the screen but keeps the record.)
         clearConversationToken();
-        setAnnounce("This chat was deleted from Cadre's records.");
-        // The Delete button unmounts with the token; move focus to the
-        // composer instead of letting it fall to <body> (Codex round 9 #6).
+        pendingTurnRef.current = null;
+        setItems([]);
+        setErrorText(null);
+        setDraft(null);
+        setStatus("idle");
+        setAnnounce("This chat was deleted and cleared.");
+        // Both header controls unmount with the empty transcript/token; move
+        // focus to the composer instead of letting it fall to <body> (round 9 #6).
         document.getElementById("chat-input")?.focus();
       } else {
         setAnnounce(
