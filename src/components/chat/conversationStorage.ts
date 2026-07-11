@@ -5,7 +5,7 @@
  * the pure request/response helpers that decide what each send and each control
  * sends to the server. Keeping the decisions in exported pure functions lets
  * them be unit-tested without a DOM, matching the pattern in EscalationCard and
- * useSpeechOutput. All sessionStorage access is guarded for SSR and for
+ * the chat UI hooks. All sessionStorage access is guarded for SSR and for
  * environments where storage is blocked (private browsing, quota).
  */
 
@@ -136,7 +136,7 @@ export function resetSessionStateForTests(): void {
 /**
  * Minimal external store so components can read the per-tab session state with
  * useSyncExternalStore — SSR-safe hydration without a setState-in-effect
- * cascade, matching useSpeechOutput's feature-detection pattern. getSnapshot
+ * cascade, matching the speech-input hook's feature-detection pattern. getSnapshot
  * returns primitives (string | null, boolean) so React's Object.is check is
  * stable and never loops. The mutators above notify after writing.
  */

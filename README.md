@@ -11,7 +11,7 @@ guarantees; routes what it can't answer to a verified human-contact path;
 captures consented escalation leads with their conversation context; and
 stores conversations under privacy controls that are enforced in code, not
 just promised (notice at collection, Private mode, Delete this chat,
-automated 30-day retention). Browser voice (speech in, opt-in read-aloud) is
+automated 30-day retention). Browser voice input (speech-to-text) is
 a progressive enhancement; text chat is canonical.
 
 ## Architecture in 30 seconds

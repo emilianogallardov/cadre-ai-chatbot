@@ -29,7 +29,6 @@ import {
 import { Composer } from "./Composer";
 import { hasSubmittedEscalation } from "./EscalationCard";
 import { Transcript } from "./Transcript";
-import { useSpeechOutput } from "./useSpeechOutput";
 import { useVisualViewportPin } from "./useVisualViewport";
 
 export interface TranscriptItem {
@@ -49,13 +48,6 @@ export function Chat() {
     null,
   );
   const abortRef = useRef<AbortController | null>(null);
-  const {
-    supported: speechSupported,
-    enabled: speechEnabled,
-    setEnabled: setSpeechEnabled,
-    speak,
-    cancel: cancelSpeech,
-  } = useSpeechOutput();
 
   // Conversation-storage session state (ADR-008), read from the per-tab
   // sessionStorage-backed store. useSyncExternalStore hydrates SSR-safely
@@ -146,9 +138,6 @@ export function Chat() {
       }
       inFlightRef.current = true;
 
-      // A new user message supersedes any reply still being read aloud.
-      cancelSpeech();
-      let assistantText = "";
       // A stream that ends without the terminal `done` event (and without an
       // abort) is a dropped connection, not a completed turn.
       let sawDone = false;
@@ -245,7 +234,6 @@ export function Chat() {
 
       function handleEvent(event: StreamEvent) {
         if (event.type === "text") {
-          assistantText += event.delta;
           setItems((prev) => {
             const next = [...prev];
             const last = next[next.length - 1];
@@ -279,20 +267,17 @@ export function Chat() {
           writeConversationToken(event.token);
         } else if (event.type === "done") {
           sawDone = true;
-          // Read the completed reply once, only if output is enabled.
-          speak(assistantText);
         } else if (event.type === "error") {
           throw Object.assign(new Error(event.message), { name: "StreamError" });
         }
       }
     },
-    [items, status, cancelSpeech, speak, conversationToken, privateMode],
+    [items, status, conversationToken, privateMode],
   );
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
-    cancelSpeech();
-  }, [cancelSpeech]);
+  }, []);
 
   // Fresh start: clears the on-screen transcript and drops the conversation
   // token so the next turn mints a NEW server-side conversation. The old
@@ -302,7 +287,6 @@ export function Chat() {
   const newChat = useCallback(() => {
     if (deleting) return;
     abortRef.current?.abort();
-    cancelSpeech();
     clearConversationToken();
     pendingTurnRef.current = null;
     setItems([]);
@@ -311,7 +295,7 @@ export function Chat() {
     setStatus("idle");
     setAnnounce("Started a new chat.");
     document.getElementById("chat-input")?.focus();
-  }, [deleting, cancelSpeech]);
+  }, [deleting]);
 
   return (
     // Full-bleed shell: the scroll area spans the viewport so the scrollbar
@@ -425,36 +409,6 @@ export function Chat() {
             </button>
           )}
 
-          {speechSupported && (
-            <button
-              type="button"
-              onClick={() => setSpeechEnabled(!speechEnabled)}
-              aria-label="Read replies aloud"
-              aria-pressed={speechEnabled}
-              title="Read replies aloud"
-              className={`ui-lift grid h-9 w-9 cursor-pointer place-items-center rounded-xl border bg-white/60 shadow-sm hover:bg-white hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 ${
-                speechEnabled
-                  ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
-                  : "border-zinc-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
-              }`}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                {speechEnabled && <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />}
-                {speechEnabled && <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />}
-              </svg>
-            </button>
-          )}
           </div>
         </div>
       </header>

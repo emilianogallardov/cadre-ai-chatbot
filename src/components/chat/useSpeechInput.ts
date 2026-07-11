@@ -39,6 +39,9 @@ interface SpeechResultEvent {
   resultIndex: number;
   results: ArrayLike<SpeechResult>;
 }
+interface SpeechErrorEvent {
+  error?: string;
+}
 interface RecognitionInstance {
   lang: string;
   interimResults: boolean;
@@ -47,7 +50,7 @@ interface RecognitionInstance {
   stop(): void;
   abort(): void;
   onresult: ((event: SpeechResultEvent) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechErrorEvent) => void) | null;
   onend: (() => void) | null;
 }
 type RecognitionCtor = new () => RecognitionInstance;
@@ -93,8 +96,19 @@ export function useSpeechInput(): SpeechInput {
   );
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<RecognitionInstance | null>(null);
+  // True from start() until the user stops/cancels (or the session cap hits).
+  // Engines end recognition on their own after a few seconds of silence; while
+  // this flag is set, onend silently starts a fresh instance so one tap keeps
+  // the mic live through natural pauses instead of dying mid-thought.
+  const keepAliveRef = useRef(false);
+  const deadlineRef = useRef(0);
+
+  // Hard cap on one tap's listening session — a forgotten open mic should
+  // close itself even though the pulsing button shows the live state.
+  const SESSION_MS = 120_000;
 
   const stop = useCallback(() => {
+    keepAliveRef.current = false;
     const rec = recognitionRef.current;
     if (!rec) return;
     try {
@@ -105,6 +119,7 @@ export function useSpeechInput(): SpeechInput {
   }, []);
 
   const cancel = useCallback(() => {
+    keepAliveRef.current = false;
     const rec = recognitionRef.current;
     if (!rec) return;
     // Detach the result handler FIRST: stop()/abort() may still flush a final
@@ -134,44 +149,66 @@ export function useSpeechInput(): SpeechInput {
       recognitionRef.current = null;
     }
 
-    const rec = new Ctor();
-    rec.lang = "en-US";
-    rec.interimResults = true;
-    rec.continuous = false;
+    keepAliveRef.current = true;
+    deadlineRef.current = Date.now() + SESSION_MS;
 
-    rec.onresult = (event) => {
-      let interim = "";
-      let final = "";
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        const text = result[0]?.transcript ?? "";
-        if (result.isFinal) final += text;
-        else interim += text;
+    const begin = () => {
+      const rec = new Ctor();
+      rec.lang = "en-US";
+      rec.interimResults = true;
+      rec.continuous = true;
+
+      rec.onresult = (event) => {
+        let interim = "";
+        let final = "";
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const result = event.results[i];
+          const text = result[0]?.transcript ?? "";
+          if (result.isFinal) final += text;
+          else interim += text;
+        }
+        if (final) onTranscript(final, true);
+        else if (interim) onTranscript(interim, false);
+      };
+      rec.onerror = (event) => {
+        // Fatal errors (permission denied, no capture device) must not
+        // restart-loop; silence timeouts ('no-speech') fall through to onend
+        // where keep-alive decides.
+        const err = event?.error ?? "";
+        if (err === "not-allowed" || err === "service-not-allowed" || err === "audio-capture") {
+          keepAliveRef.current = false;
+          setListening(false);
+        }
+      };
+      rec.onend = () => {
+        recognitionRef.current = null;
+        if (keepAliveRef.current && Date.now() < deadlineRef.current) {
+          begin();
+          return;
+        }
+        keepAliveRef.current = false;
+        setListening(false);
+      };
+
+      recognitionRef.current = rec;
+      try {
+        rec.start();
+      } catch {
+        keepAliveRef.current = false;
+        setListening(false);
+        recognitionRef.current = null;
       }
-      if (final) onTranscript(final, true);
-      else if (interim) onTranscript(interim, false);
-    };
-    rec.onerror = () => {
-      // Includes 'not-allowed' (permission denied): stop cleanly, no throw.
-      setListening(false);
-    };
-    rec.onend = () => {
-      setListening(false);
-      recognitionRef.current = null;
     };
 
-    recognitionRef.current = rec;
     setListening(true);
-    try {
-      rec.start();
-    } catch {
-      setListening(false);
-      recognitionRef.current = null;
-    }
+    begin();
   }, []);
 
   useEffect(
     () => () => {
+      // Kill keep-alive BEFORE aborting: abort fires onend, which would
+      // otherwise restart recognition on an unmounted component.
+      keepAliveRef.current = false;
       const rec = recognitionRef.current;
       if (rec) {
         try {

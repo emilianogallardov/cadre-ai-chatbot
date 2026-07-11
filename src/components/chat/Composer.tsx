@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { LIMITS } from "@/lib/chat/types";
 import { joinTranscript, useSpeechInput } from "./useSpeechInput";
 
@@ -39,6 +39,17 @@ export function Composer({
   // what the user reviews and sends. Voice never auto-submits.
   const value = interim ? joinTranscript(text, interim) : text;
 
+  // Auto-grow: the textarea tracks its content up to ~5 lines, then scrolls
+  // internally — a long question stays fully visible instead of cutting off
+  // in a one-line box.
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 144)}px`;
+  }, [value]);
+
   const handleTranscript = useCallback((spoken: string, isFinal: boolean) => {
     if (isFinal) {
       setText((prev) => joinTranscript(prev, spoken));
@@ -48,8 +59,7 @@ export function Composer({
     }
   }, []);
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
+  function doSend() {
     if (disabled || !value.trim()) return;
     // cancel(), not stop(): stop() lets the engine deliver one last final
     // result, which would repopulate the just-cleared composer with the text
@@ -59,6 +69,11 @@ export function Composer({
     onSend(value);
     setText("");
     setInterim("");
+  }
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    doSend();
   }
 
   function toggleMic() {
@@ -73,24 +88,36 @@ export function Composer({
   return (
     <form
       onSubmit={submit}
-      className="mb-2 flex items-center gap-1 rounded-2xl border border-zinc-200/80 bg-white p-1.5 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.02] transition-[border-color,box-shadow] focus-within:border-zinc-400 focus-within:shadow-[0_14px_36px_-18px_rgba(0,0,0,0.5)] dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/[0.06] dark:focus-within:border-zinc-600"
+      // items-end keeps the mic/Send buttons seated at the bottom edge while
+      // the textarea grows upward.
+      className="mb-2 flex items-end gap-1 rounded-2xl border border-zinc-200/80 bg-white p-1.5 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.02] transition-[border-color,box-shadow] focus-within:border-zinc-400 focus-within:shadow-[0_14px_36px_-18px_rgba(0,0,0,0.5)] dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/[0.06] dark:focus-within:border-zinc-600"
     >
       <label htmlFor="chat-input" className="sr-only">
         Your question
       </label>
-      <input
+      <textarea
         id="chat-input"
+        ref={inputRef}
+        rows={1}
         value={value}
         onChange={(e) => {
           setText(e.target.value);
           setInterim("");
+        }}
+        onKeyDown={(e) => {
+          // Enter sends (parity with the old single-line input); Shift+Enter
+          // makes a newline for anyone composing a longer question.
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            doSend();
+          }
         }}
         maxLength={LIMITS.maxMessageChars}
         placeholder="Ask about Cadre AI…"
         autoComplete="off"
         // text-base below sm: iOS Safari auto-zooms the page when a focused
         // input's font-size is under 16px, which wrecks the fixed dock layout.
-        className="min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-2.5 text-base outline-none placeholder:text-zinc-500 sm:text-sm dark:placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-inset"
+        className="min-w-0 flex-1 resize-none rounded-xl border-0 bg-transparent px-3 py-2.5 text-base leading-5 outline-none placeholder:text-zinc-500 sm:text-sm dark:placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-inset"
       />
       {speech.supported && (
         <button

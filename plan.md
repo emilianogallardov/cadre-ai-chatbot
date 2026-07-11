@@ -125,7 +125,9 @@ Exit: pricing, booking, portal, and unknown questions all behave safely.
 - [x] Feature-detected speech input (Web Speech API); hidden when unsupported
       (`680f7ad`; interim preview, never auto-sends)
 - [x] Opt-in speech output; never autoplay (`680f7ad`; off by default, speaks
-      once on stream completion, cancelled by new input/Stop)
+      once on stream completion, cancelled by new input/Stop) — REMOVED
+      2026-07-11 by owner decision: unreliable on iOS (silent switch, no
+      autoplay grant), low value next to native screen readers (T-068)
 - [x] Full text fallback verified with voice unavailable (`680f7ad`; SSR HTML
       carries no voice controls; unsupported browsers render the identical
       text experience. Real-mic Chrome smoke remains a manual step)
