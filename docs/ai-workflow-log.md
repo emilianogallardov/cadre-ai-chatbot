@@ -350,3 +350,33 @@ tests, lint, typecheck, production build.
   T-056 write-up itself — claims scoped to what one uncontrolled run shows,
   chronology corrected from stored-row timestamps, the raw latency series
   preserved in the report, quantile method labeled.
+
+## Instruction-discovery audit — two blind agents test the governance itself (2026-07-11, morning)
+
+- **The question shifted one level up:** after ten reviews of the product,
+  the owner asked whether the PROCESS is discoverable — does a fresh agent
+  pointed at this repo actually find and follow the instructions?
+- **Method:** two blind subagents with fresh contexts and no project
+  knowledge, strictly read-only. One got a cold "review this project" brief,
+  one got a small change to plan (a suggested-prompt chip). Both were told to
+  log every step in order and work naturally.
+- **Result — the governance held:** both discovered the instruction files at
+  step 2-3 and REORDERED their own work because of them (timeline + plan +
+  git status before source, exactly as the required workflow demands). The
+  task agent's plan independently reconstructed the full process chain:
+  timeline start/outcome entries, KB-mapping constraint for chip text (and
+  that pricing/portal/booking chips would invite prohibited claims),
+  doc/code reconciliation in the same commit, verify gate, deploy + live
+  smoke, push != deployed. It also correctly resolved the global-vs-project
+  instruction tension in the project's favor.
+- **Friction found and fixed:** an empty `docs/handoff/` placeholder
+  promised current-state docs it didn't have (removed); the 65KB timeline
+  overflows a naive tail/cat (reading tip added to the header); the
+  historical "Not started" planning snapshot at the file's tail can misread
+  as current status (tip covers it). Left alone deliberately: the
+  "six scenarios vs four chips" comment in SuggestedPrompts.tsx — a parallel
+  session was actively editing that file.
+- **Cross-tool gap closed the same hour:** AGENTS.md had been a
+  Claude-only `@CLAUDE.md` stub; per the 2026 standard the content now
+  lives in AGENTS.md (Codex/Cursor/Copilot read it natively) and CLAUDE.md
+  imports it.
