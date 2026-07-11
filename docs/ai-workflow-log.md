@@ -44,7 +44,7 @@ findings; the orchestrator adjudicated each:
      construction — an outage now denies with the same friendly 429.
   2. *Reduced-severity.* Per-message caps allowed a worst case of ~15k input
      tokens/request; at 400 req/day that could exceed the $5 budget. Added
-     `LIMITS.maxTotalChars = 8000` (whole-conversation cap); worst case now ~$2/day.
+     `LIMITS.maxTotalChars = 8000` (whole-conversation cap); worst case then estimated ~$2/day (superseded by docs/SCALING.md $2a: ~$2.62 Haiku / ~$7.86 all-Sonnet at the 400 cap).
   3. *Reduced-severity / injection.* Enforced strict user/assistant alternation
      that must start and end with a user turn, closing forged
      assistant-history injection at the shape level.

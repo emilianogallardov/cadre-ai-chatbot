@@ -110,7 +110,7 @@ export function Transcript({
               >
                 C
               </div>
-              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                 Cadre AI resource agent
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.025em] text-zinc-900 dark:text-zinc-100">
@@ -182,7 +182,7 @@ export function Transcript({
         <button
           type="button"
           onClick={jumpToLatest}
-          className="absolute bottom-3 left-1/2 -translate-x-1/2 cursor-pointer rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-md hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          className="tap-target absolute bottom-3 left-1/2 -translate-x-1/2 cursor-pointer rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-md hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
         >
           <span aria-hidden="true">↓</span> Latest
         </button>

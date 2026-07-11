@@ -213,7 +213,7 @@ export function EscalationCard({ card }: { card: ActionCard }) {
 
   return (
     <form className={cardFrame} onSubmit={handleSubmit} aria-busy={sending}>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
         Talk to the Cadre team
       </p>
       <p className="mt-1 text-sm font-semibold tracking-tight">{card.title}</p>

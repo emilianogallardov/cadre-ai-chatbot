@@ -49,7 +49,7 @@ orchestrator fills them from real runs the same night):
 2. **The ceilings, in order of arrival** —
    (a) the global daily cap: a deliberate cost governor for a metered key,
    not an architectural limit — scaling step one is raising a number and a
-   budget (measured cost/turn table: haiku ~$0.0008 from the 2026-07-11
+   budget (measured cost/turn table: haiku ~$0.0024 measured average per docs/SCALING.md $2a — superseding this spec's earlier estimate — from the 2026-07-11
    benchmark; worked examples at 1k/10k/100k turns per day);
    (b) limiter durability: in-memory counters multiply across warm
    instances — Upstash flips this to durable shared counters (env vars

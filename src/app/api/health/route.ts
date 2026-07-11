@@ -23,6 +23,12 @@ export async function GET() {
   };
   const healthy = configured.gateway && configured.storage;
 
+  // Transparency call, made deliberately: the source is public and the
+  // repo's own verification docs state the limiter posture, so these
+  // booleans reveal nothing a reader of the repo doesn't have — and they
+  // make the health semantics demonstrable. A closed-source deployment
+  // should collapse this to aggregate status only. "Configured" means the
+  // strings are present, not that credentials are currently valid.
   return Response.json(
     {
       status: healthy
@@ -33,6 +39,9 @@ export async function GET() {
       configured,
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
     },
-    { status: healthy ? 200 : 503 },
+    {
+      status: healthy ? 200 : 503,
+      headers: { "Cache-Control": "no-store" },
+    },
   );
 }

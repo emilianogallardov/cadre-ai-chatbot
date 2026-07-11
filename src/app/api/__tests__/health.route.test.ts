@@ -44,3 +44,10 @@ describe("GET /api/health", () => {
     expect(text).not.toContain("super-secret-value");
   });
 });
+
+describe("health response caching", () => {
+  it("H4: never cached — Cache-Control: no-store", async () => {
+    const res = await GET();
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+  });
+});

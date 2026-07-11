@@ -285,7 +285,7 @@ export function Chat() {
               C
             </span>
             <div className="min-w-0 max-[430px]:sr-only">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
                 Cadre AI
               </p>
               <h1 className="truncate text-sm font-semibold tracking-tight">
@@ -412,7 +412,7 @@ export function Chat() {
         <button
           type="button"
           onClick={() => setPrivateMode(!privateMode)}
-          className="cursor-pointer underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
+          className="tap-target cursor-pointer underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
         >
           {privateMode ? "Turn off private mode" : "Turn on private mode"}
         </button>
