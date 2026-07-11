@@ -1,6 +1,6 @@
 # ADR-007: Model Selection by Scenario Benchmark
 
-- Status: Accepted method; final model pending benchmark results
+- Status: Accepted — selected `claude-haiku-4.5` (fallback `claude-sonnet-4.5`) by the amended rule below
 - Date: 2026-07-08
 
 ## Context
@@ -68,3 +68,9 @@ key buys roughly 2,400 turns). **Fallback (`OPENROUTER_FALLBACK_MODEL`):**
 an unbenchmarked model never answers (gateway fallback policy).
 `openai/gpt-5-mini` remains the recorded cost floor if response latency ever
 stops mattering (e.g. an async/email channel).
+
+**Addendum (2026-07-10):** the harness now encodes this amended rule — the
+first-token latency gate lives in `src/lib/benchmark/selection.ts` (pure,
+unit-tested `selectModel`) and drives both the report and console selection in
+`scripts/benchmark.ts`, so re-running `npm run benchmark` reproduces the
+`claude-haiku-4.5` pick above instead of the cost-only `gpt-5-mini` floor.

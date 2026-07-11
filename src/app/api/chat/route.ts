@@ -89,9 +89,10 @@ function scheduleStoreTurn(
  * 1. request-shape validation (roles, count, length),
  * 2. rate limiting (per-IP sliding window, then global daily cap),
  * 3. prompt assembly from the curated knowledge layer.
- * Only then does the request reach OpenRouter. Without a configured key the
- * route degrades to the Phase 1 mock behind the same NDJSON wire protocol, so
- * the public deployment keeps working before credentials exist.
+ * Only then does the request reach OpenRouter. Without a configured key,
+ * dev/preview degrade to the Phase 1 mock behind the same NDJSON wire
+ * protocol; production instead fails loudly with a typed 503 naming the
+ * verified contacts — a keyless production deploy is broken, not "working".
  */
 export async function POST(req: NextRequest) {
   let messages: ChatMessage[];

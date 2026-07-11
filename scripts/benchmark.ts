@@ -15,7 +15,8 @@
  *   npm run benchmark modelA modelB ...    # override the candidate list
  *
  * Selection rule (ADR-007): the least expensive model that passes every safety
- * and scenario check. Full report is written to
+ * and scenario check AND has a median first-token latency ≤ 3 s (encoded in
+ * lib/benchmark/selection.ts). Full report is written to
  * docs/benchmarks/<YYYY-MM-DD>-model-benchmark.md.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -23,6 +24,7 @@ import { dirname, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 
+import { FIRST_TOKEN_GATE_MS, selectModel } from "@/lib/benchmark/selection";
 import type { ChatMessage } from "@/lib/chat/types";
 import { GatewayError, streamChatCompletion } from "@/lib/gateway/openrouter";
 import { assemblePrompt } from "@/lib/prompt/assemble";
@@ -441,32 +443,49 @@ function buildReport(summaries: ModelSummary[], date: string): string {
   }
   lines.push("");
 
-  // Selection rule.
-  const passing = summaries.filter((s) => s.allPassed);
+  // Selection rule (ADR-007). ModelSummary carries every field selectModel
+  // needs, so pass summaries straight in (structural typing).
+  const selection = selectModel(summaries);
   lines.push("## Selection rule");
   lines.push("");
   lines.push(
-    "> ADR-007: the least expensive model that passes every safety and scenario check.",
+    `> ADR-007: the least expensive model that passes every safety and scenario ` +
+      `check AND has a median first-token latency ≤ ${FIRST_TOKEN_GATE_MS / 1000} s.`,
   );
   lines.push("");
-  if (passing.length > 0) {
-    const winner = passing.reduce((a, b) =>
-      b.totalCostUsd < a.totalCostUsd ? b : a,
-    );
+  if (selection.winner) {
+    const winner = selection.winner;
+    const others = selection.eligible.filter((s) => s.model !== winner.model);
     lines.push(
-      `**Winner: \`${winner.model}\`** — passed all ${winner.total} checks at the ` +
-        `lowest measured cost (${fmtCost(winner.totalCostUsd)}). Other passing ` +
-        `models: ${
-          passing
-            .filter((s) => s.model !== winner.model)
+      `**Winner: \`${winner.model}\`** — passed every check with a median ` +
+        `first-token latency of ${fmtMs(winner.medianFirstDeltaMs)}ms ` +
+        `(≤ ${FIRST_TOKEN_GATE_MS}ms gate) at the lowest eligible cost ` +
+        `(${fmtCost(winner.totalCostUsd)}). Other eligible models: ${
+          others
             .map((s) => `\`${s.model}\` (${fmtCost(s.totalCostUsd)})`)
             .join(", ") || "none"
         }.`,
     );
   } else {
-    lines.push("**No model passed every check.** Failures per model:");
+    lines.push("**No model satisfied the ADR-007 selection rule.**");
+  }
+  if (selection.excluded.length > 0) {
+    lines.push("");
+    lines.push("Excluded:");
+    lines.push("");
+    for (const { candidate, reason } of selection.excluded) {
+      lines.push(`- \`${candidate.model}\`: ${reason}`);
+    }
+  }
+  lines.push("");
+
+  // Per-model failure detail, so a reader can see exactly which checks broke.
+  const anyFailed = summaries.some((s) => !s.allPassed);
+  if (anyFailed) {
+    lines.push("Failures per model:");
     lines.push("");
     for (const s of summaries) {
+      if (s.allPassed) continue;
       const fails = s.cells
         .filter((c) => !c.passed)
         .map(
@@ -475,8 +494,8 @@ function buildReport(summaries: ModelSummary[], date: string): string {
         );
       lines.push(`- \`${s.model}\`: ${fails.join("; ")}`);
     }
+    lines.push("");
   }
-  lines.push("");
 
   // Per-model detail.
   for (const s of summaries) {
@@ -541,18 +560,17 @@ function printConsoleSummary(summaries: ModelSummary[]): void {
       "est. total cost": fmtCost(s.totalCostUsd),
     })),
   );
-  const passing = summaries.filter((s) => s.allPassed);
-  if (passing.length > 0) {
-    const winner = passing.reduce((a, b) =>
-      b.totalCostUsd < a.totalCostUsd ? b : a,
-    );
+  const selection = selectModel(summaries);
+  if (selection.winner) {
     console.log(
-      `Selection (cheapest fully-passing): ${winner.model} @ ${fmtCost(
-        winner.totalCostUsd,
-      )}`,
+      `Selection (cheapest passing within the ${FIRST_TOKEN_GATE_MS}ms first-token gate): ` +
+        `${selection.winner.model} @ ${fmtCost(selection.winner.totalCostUsd)}`,
     );
   } else {
-    console.log("Selection: no model passed every check (see report).");
+    console.log("Selection: no model satisfied the ADR-007 rule (see report).");
+  }
+  for (const { candidate, reason } of selection.excluded) {
+    console.log(`  excluded ${candidate.model}: ${reason}`);
   }
 }
 

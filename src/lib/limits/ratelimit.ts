@@ -148,8 +148,8 @@ async function checkUpstash(
 }
 
 /**
- * Per-IP daily cap on escalation submissions (ADR-005 spam control). This runs
- * in addition to the chat-style per-IP/global gate on the escalations route: a
+ * Per-IP daily cap on escalation submissions (ADR-005 spam control) — the
+ * only limiter on the escalations route, which spends no model budget: a
  * single client may file only a few leads per day. Same durable-Redis-preferred,
  * fail-closed, in-memory-fallback semantics as checkRateLimit; it is handed only
  * an IP and never sees the submission.

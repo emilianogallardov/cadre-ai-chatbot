@@ -69,12 +69,19 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 18 files, 205/205 tests, lint, typecheck, production build ✅
+- `npm run verify`: 22 files, 230/230 tests, lint, typecheck, production build ✅
 - Cross-review: Codex design round 13/13 accepted; implementation round 8/8
   accepted, all closed; round 3 full-repo review (GPT-5.6 Sol) 14 findings —
-  9 fixed, 2 already user-gated, 3 deferred with documented reasoning
-  (docs/reviews/2026-07-10-codex-round3-full-repo-review.md) ✅
-- Timeline: append-only through T-048 with evidence per entry ✅
+  9 fixed, 2 user-gated, 3 deferred
+  (docs/reviews/2026-07-10-codex-round3-full-repo-review.md); round 4
+  increment review of the spec'd hardening (route-level tests + benchmark
+  latency gate) — 8/8 closed through a fix-then-confirm loop
+  (docs/reviews/2026-07-10-codex-round4-increment-review.md) ✅
+- Round-3 deferrals #11/#12 since UN-deferred and shipped: the three public
+  routes now have 19 spec-pinned protocol/error/storage tests in the gate,
+  and the ADR-007 latency gate is encoded in a pure, unit-tested selector
+  (docs/specs/) ✅
+- Timeline: append-only through T-049 with evidence per entry ✅
 
 ## Independent rubric audit (212-item planning checklist)
 

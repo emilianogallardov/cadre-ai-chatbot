@@ -236,3 +236,23 @@ tests, lint, typecheck, production build.
   then reconciling), and the UI session folded the orchestrator's logic edits
   into its commit — verified by grepping the committed blob before building
   on top of it.
+
+## Spec-first hardening loop (2026-07-10, evening)
+
+- **Specs as contracts, in-repo:** both improvement tracks were written as
+  pinned specs (docs/specs/) before any builder ran — required case IDs,
+  mandated mock seams, hard "do not touch product code" rules, and explicit
+  never-run-the-benchmark spend protection. The builders' handoffs are
+  auditable against those files, not against intent remembered later.
+- **Parallel Opus builders on disjoint file sets:** route tests and the
+  benchmark selector share nothing, so both ran concurrently with no
+  worktree. The orchestrator re-verified each against its spec before any
+  review — including confirming all 25 case IDs and that the metered
+  benchmark was never executed.
+- **Review loop until closed:** Codex (GPT-5.6 Sol) returned FIX-THEN-ACCEPT
+  with the two highest-value catches being tests that would pass with a
+  broken product: membership-not-sequence assertions on the NDJSON stream,
+  and a "bad token" case that failed at syntax before ever exercising HMAC
+  verification. After fixes, a confirmation pass verified each finding
+  individually CLOSED (one comment-numbering nit surfaced and fixed) —
+  the loop ended at accept, not at "probably fine".

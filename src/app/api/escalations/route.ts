@@ -20,13 +20,14 @@ const MAX_BODY_BYTES = 16_384;
  * POST /api/escalations — persist one minimal support lead (ADR-005).
  *
  * Cheap gates run in strict order before the single write:
- * 1. header checks (JSON content type, bounded content length),
- * 2. the per-IP daily escalation cap — checked BEFORE parsing the body, and
- *    the ONLY limiter on this route: the chat limiter's global counter guards
- *    model spend (ADR-006) and this route spends no model, so escalation
- *    traffic must not be able to exhaust it and block /api/chat,
- * 3. shape validation of the minimal fields (400 on failure),
- * 4. the validated insert, with the server stamping the consent timestamp.
+ * 1. content-type check, then a byte-bounded body read + shape validation of
+ *    the minimal fields (400/413 on failure),
+ * 2. the per-IP daily escalation cap — checked AFTER validation so only
+ *    well-formed submissions consume it, and the ONLY limiter on this route:
+ *    the chat limiter's global counter guards model spend (ADR-006) and this
+ *    route spends no model, so escalation traffic must not be able to
+ *    exhaust it and block /api/chat,
+ * 3. the validated insert, with the server stamping the consent timestamp.
  * If the durable store fails, the user is always handed the verified
  * direct-contact fallback (ADR-005) rather than a raw error.
  */
