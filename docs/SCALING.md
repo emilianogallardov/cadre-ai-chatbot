@@ -108,6 +108,13 @@ Above some concurrency the binding limit is the provider's per-model TPM, not
 our functions. Mitigations, cheapest first:
 1. **Fallback model routing** — already configured (`OPENROUTER_FALLBACK_MODEL`
    = `claude-sonnet-4.5`, ADR-007); an overloaded primary spills to the fallback.
+   Proven live by failure injection (a valid primary erroring at runtime was
+   served by the Sonnet fallback within the same call — via Amazon Bedrock,
+   showing OpenRouter's own multi-provider layer under each model):
+   `docs/benchmarks/2026-07-11-fallback-injection-test.md`. Caveat from the
+   same test: an INVALID model ID rejects the whole request regardless of the
+   fallback array — a config typo fails loud as the typed error rather than
+   degrading to the fallback (the post-deploy smoke turn is the guard).
 2. **Multi-provider** — the gateway makes the model a config value, so adding a
    second provider (or a second key) for the same model class is a config change
    in `lib/gateway/`, not an architecture change.
