@@ -73,7 +73,7 @@ export function Composer({
   return (
     <form
       onSubmit={submit}
-      className="mb-3 flex items-center gap-1 rounded-2xl border border-zinc-200/80 bg-white p-1.5 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.02] transition-[border-color,box-shadow] focus-within:border-zinc-400 focus-within:shadow-[0_14px_36px_-18px_rgba(0,0,0,0.5)] dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/[0.06] dark:focus-within:border-zinc-600"
+      className="mb-2 flex items-center gap-1 rounded-2xl border border-zinc-200/80 bg-white p-1.5 shadow-[0_12px_32px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.02] transition-[border-color,box-shadow] focus-within:border-zinc-400 focus-within:shadow-[0_14px_36px_-18px_rgba(0,0,0,0.5)] dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/[0.06] dark:focus-within:border-zinc-600"
     >
       <label htmlFor="chat-input" className="sr-only">
         Your question

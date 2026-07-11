@@ -471,7 +471,7 @@ export function Chat() {
       />
 
       <div className="border-t border-zinc-200/70 bg-white/80 shadow-[0_-20px_60px_-40px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-950/80">
-        <div className="mx-auto w-full max-w-3xl px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3">
+        <div className="mx-auto w-full max-w-3xl px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
       {errorText && (
         <p
           role="alert"
@@ -489,7 +489,10 @@ export function Chat() {
         streaming={status === "streaming"}
       />
 
-      <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+      {/* Compact caption, ChatGPT-style: centered, small, tucked under the
+          composer. Same enforced copy — only the presentation is quiet
+          (zinc-500 stays ≥4.5:1 on white per the round-8 contrast pass). */}
+      <p className="mx-auto max-w-md text-center text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">
         {noticeText(privateMode)}{" "}
         <a
           href="/privacy"
@@ -515,7 +518,7 @@ export function Chat() {
         aria-live="polite"
         className={
           announce
-            ? "mb-2 text-xs text-zinc-500 dark:text-zinc-400"
+            ? "mt-1 text-center text-[11px] leading-4 text-zinc-500 dark:text-zinc-400"
             : "sr-only"
         }
       >
