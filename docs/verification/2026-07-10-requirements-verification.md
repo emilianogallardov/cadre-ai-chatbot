@@ -137,7 +137,7 @@ product sections after the same-hour fixes:
 
 1. **Gem submission** (D7) — repo URL in Notes; save confirmation
 2. **Recruiter key swap** — remove personal key, add recruiter's, redeploy, one smoke turn; rotate the personal key after
-3. **Manual browser pass** (cannot be automated): mic input, speaker toggle, Private/Delete controls by hand, phone-sized viewport
+3. **Manual browser pass** (cannot be automated): mic input (retest the T-068 keep-alive fix on-device), Private/Delete controls by hand, phone-sized viewport (read-aloud speech output was removed in T-068 — no speaker toggle to test)
 4. **Final secret re-scan** after the last commit, before the Gem form
 5. **Provision Upstash (Vercel → Storage)** — elevated from optional by the
    round-3 review: without it the "global" daily cap is per-instance memory,

@@ -125,6 +125,7 @@ scripts/loadtest.mjs               # repeatable load harness (localhost mock by 
 scripts/quality-metrics.ts         # answer-quality harness (contact cooldown, voice, synthesis probes; explicit spend)
 docs/ai-workflow-log.md            # real record of AI delegation on this project
 ACTIVITY-TIMELINE.md               # append-only build log with evidence per entry
+skills/                            # the methods that built this repo (with anti-patterns)
 supabase/migrations/               # escalations + conversations/messages: RLS on, no policies, pg_cron retention
 ```
 
@@ -171,8 +172,12 @@ Each cut is an ADR with the trigger that would reverse it:
 Claude Code (Fable 5) orchestrated the build: parallel subagents implemented
 modules against pinned interface contracts, the orchestrator independently
 re-verified and committed everything, and an external adversarial reviewer
-(Codex / GPT-5.5) audited each phase's diff — several of its findings changed
-the design, and a few were declined with recorded rationale. The full,
-non-retrospective record is in
+(Codex / GPT-5.6) audited each increment's diff across eleven rounds — several
+of its findings changed the design, and a few were declined with recorded
+rationale. This was deliberate methodology, not one-shot generation: the
+repeatable methods used — adversarial review, root-cause debugging,
+design-before-code, and refute-before-trust verification — are documented as
+[`skills/`](skills/README.md), each with the anti-patterns it exists to
+prevent. The full, non-retrospective record is in
 [docs/ai-workflow-log.md](docs/ai-workflow-log.md) and
 [ACTIVITY-TIMELINE.md](ACTIVITY-TIMELINE.md).
