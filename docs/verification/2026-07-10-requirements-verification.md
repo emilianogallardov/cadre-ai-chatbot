@@ -69,7 +69,7 @@ selector deliberately favors offering a human over staying silent).
 
 ## Quality gates (this session)
 
-- `npm run verify`: 25 files, 307/307 tests, lint, typecheck, production build ✅ (2026-07-11, post round 12 — count moved 287→295→299→307 across rounds 9–12; file count dropped to 25 when read-aloud/speech-output was removed in T-068)
+- `npm run verify`: 26 files, 321/321 tests, lint, typecheck, production build ✅ (2026-07-11, post round 13 + Upstash + delete-UX — count moved 287→295→299→307→315→321 across rounds 9–13 and the T-074/T-075 changes)
 - Session + scale hardening (round 6, owner-directed): the session wall fixed
   (rolling window valid by construction; 50-exchange endurance tests through
   the real route), spend-guarded load harness + docs/SCALING.md with measured
@@ -133,16 +133,25 @@ product sections after the same-hour fixes:
   with two adversarial reviews and a full re-regression. Named honestly here
   rather than hidden.
 
-## OPEN items for submission day
+## Submission-day items
 
-1. **Gem submission** (D7) — repo URL in Notes; save confirmation
-2. **Recruiter key swap** — remove personal key, add recruiter's, redeploy, one smoke turn; rotate the personal key after
-3. **Manual browser pass** (cannot be automated): mic input (retest the T-068 keep-alive fix on-device), Private/Delete controls by hand, phone-sized viewport (read-aloud speech output was removed in T-068 — no speaker toggle to test)
-4. **Final secret re-scan** after the last commit, before the Gem form
-5. **Provision Upstash (Vercel → Storage)** — elevated from optional by the
-   round-3 review: without it the "global" daily cap is per-instance memory,
-   not a global spend guarantee. The provider-side credit limit on the
-   metered key remains the hard backstop either way
+Done (2026-07-11):
+- ✅ **Upstash provisioned** — `/api/health` now `"ok"` with
+  `durableRateLimit:true`; the global daily cap is durable across serverless
+  instances (T-074). The gateway reads the Vercel integration's variable
+  names via a resolver, so no manual aliasing.
+- ✅ **Recruiter key swapped + verified** — a live grounded turn streams and
+  boundaries hold on the deployed key; personal key removed from prod (T‑swap).
+- ✅ **Manual browser pass** — mic, Private/Delete, phone viewport checked by
+  the owner; automated concurrent + boundary sweeps also green.
+- ✅ **Final secret re-scan** — history + working tree + client bundle clean;
+  only `.env.example` (names-only) tracked; no `NEXT_PUBLIC_*` secrets.
+
+Remaining (user action):
+1. **Gem submission** (D7) — public repo URL in the Notes field; save the
+   confirmation.
+2. **Rotate the personal OpenRouter key** (optional, hygiene) — prod runs on
+   the recruiter key, so nothing depends on the personal key anymore.
 
 ## Next work package (Tuesday presentation, not submission-blocking)
 
