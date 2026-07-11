@@ -20,9 +20,16 @@ export function useVisualViewportPin() {
     const root = document.documentElement;
     const update = () => {
       root.style.setProperty("--vvh", `${Math.round(vv.height)}px`);
-      // Guarded: scrollTo(0,0) at 0 is a no-op, so the scroll listener
-      // cannot re-trigger itself.
-      if (window.scrollY !== 0) window.scrollTo(0, 0);
+      // Re-pin the document ONLY while a text control is focused — that is
+      // the input-reveal scroll this exists to counter. Unconditional pinning
+      // interrupted iOS's elastic bounce mid-animation on every scroll event,
+      // which read as extremely choppy rubber-banding. scrollY > 0 skips the
+      // bounce itself (negative/zero during elastic overscroll at the top).
+      const active = document.activeElement;
+      const editing =
+        active instanceof HTMLElement &&
+        (active.tagName === "TEXTAREA" || active.tagName === "INPUT");
+      if (editing && window.scrollY > 0) window.scrollTo(0, 0);
     };
     update();
     vv.addEventListener("resize", update);

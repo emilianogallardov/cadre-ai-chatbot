@@ -19,6 +19,14 @@
   }
 }
 
+html,
+body {
+  /* App-like frame: the transcript is the only scroll surface, so the
+     document itself must not rubber-band — its elastic bounce fought the
+     viewport pin and read as choppy scrolling on iOS. */
+  overscroll-behavior: none;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
